@@ -156,32 +156,31 @@ module task {
   export async function copyFiles(copySources: CopyConfig[]) {
     log.info('copy files')
     const files: CopyTarget[] = []
-    copySources.forEach((srcEntry) => {
-      const found = util.findFiles(srcEntry)
+    for (const srcEntry of copySources) {
+      const found = await util.findFiles(srcEntry)
       files.push(...found)
-    })
-    files.forEach(async (entry) => {
+    }
+    for (const entry of files) {
       log.info('copying ' + entry.src + ' to ' + entry.target)
       util.checkWithinRootDirOrThrow(entry.src)
       util.checkWithinRootDirOrThrow(entry.target)
       await fs.copy(entry.src, entry.target, { preserveTimestamps: true })
-    })
+    }
 
     log.trace('copy files done')
   }
 
   export async function deleteFiles(deleteSources: DeleteConfig[]) {
     const files: CopyTarget[] = []
-    deleteSources.forEach((srcEntry) => {
-      const found = util.findFiles(srcEntry)
+    for (const srcEntry of deleteSources) {
+      const found = await util.findFiles(srcEntry)
       files.push(...found)
-    })
-
-    files.forEach(async (entry) => {
+    }
+    for (const entry of files) {
       log.info('deleting ' + entry.src)
       util.checkWithinRootDirOrThrow(entry.src)
       await fs.remove(fspath.resolve(entry.src))
-    })
+    }
   }
 
   export async function sanitisePackageJson(
@@ -215,23 +214,23 @@ module task {
     const newContent = JSON.stringify(content, null, 2)
     //log.info('newContent', newContent)
 
-    await fs.writeFile(path, newContent, async (err: any) => {
-      if (err) return log.error(err)
-      log.info('wrote sanitised ' + path)
-    })
+    await fs.writeFile(path, newContent)
+    log.info('wrote sanitised ' + path)
 
     log.trace('sanitise package.json done')
   }
 
   export async function updateFiles(updates: UpdateConfig[]) {
     log.trace('update files')
-    updates.forEach(async (update, index) => {
+    let index = -1
+    for (const update of updates) {
+      index++
       if (!update.match || update.match.length == 0) {
         log.warn(`No 'find' for update [${index}]`, JSON.stringify(update))
         return
       }
-      const files = util.findFiles(update)
-      files.forEach(async (entry) => {
+      const files = await util.findFiles(update)
+      for (const entry of files) {
         const srcContent: string = await fs.readFile(entry.src, {
           encoding: update.encoding || 'utf-8',
         })
@@ -263,13 +262,11 @@ module task {
         }
 
         if (srcContent != newContent) {
-          await fs.writeFile(entry.src, newContent, async (err: any) => {
-            if (err) return log.error(err)
-            log.info('updated ' + entry.target)
-          })
+          await fs.writeFile(entry.src, newContent)
+          log.info('updated ' + entry.target)
         }
-      })
-    })
+      }
+    }
 
     log.trace('update files done')
   }
@@ -284,19 +281,19 @@ module util {
       throw new Error(errMsg)
     }
   }
-  export function findFiles(
+  export async function findFiles(
     include: HasSrcInclude & Partial<HasDestDir> & Partial<HasTarget>
-  ): CopyTarget[] {
+  ): Promise<CopyTarget[]> {
     const cleanInclude = sanitiseInclude(include)
-    const found = glob.sync(cleanInclude.includes, { cwd: cleanInclude.dir })
+    const found = await glob(cleanInclude.includes, { cwd: cleanInclude.dir })
 
     const results: CopyTarget[] = []
-    found.forEach((file) => {
+    for (const file of found) {
       const src = cleanInclude.dir + file
       //override the target if manually set
       const target = include.target || cleanInclude.dest + file
       results.push({ src, target })
-    })
+    }
     return results
   }
 
@@ -339,10 +336,11 @@ module util {
         const last = index == parts.length - 1
         if (last) {
           const replaceValue = replaceNodes[expression]
-          log.trace(`Replace node '${expression}' with ${replaceValue}`)
           if (replaceValue == undefined || replaceValue == null) {
+            log.trace(`Delete node '${expression}'`)
             delete node[part]
           } else {
+            log.trace(`Replace node '${expression}' with ${replaceValue}`)
             node[part] = replaceValue
           }
         }
