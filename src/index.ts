@@ -154,23 +154,27 @@ module task {
   //TODO:prevent accessing outside of package dir
 
   export async function copyFiles(copySources: CopyConfig[]) {
+    log.info('copy files')
     const files: CopyTarget[] = []
-    copySources.forEach(async (srcEntry) => {
-      files.push(...(await util.findFiles(srcEntry)))
+    copySources.forEach((srcEntry) => {
+      const found = util.findFiles(srcEntry)
+      files.push(...found)
     })
-
     files.forEach(async (entry) => {
       log.info('copying ' + entry.src + ' to ' + entry.target)
       util.checkWithinRootDirOrThrow(entry.src)
       util.checkWithinRootDirOrThrow(entry.target)
       await fs.copy(entry.src, entry.target, { preserveTimestamps: true })
     })
+
+    log.trace('copy files done')
   }
 
   export async function deleteFiles(deleteSources: DeleteConfig[]) {
     const files: CopyTarget[] = []
-    deleteSources.forEach(async (srcEntry) => {
-      files.push(...(await util.findFiles(srcEntry)))
+    deleteSources.forEach((srcEntry) => {
+      const found = util.findFiles(srcEntry)
+      files.push(...found)
     })
 
     files.forEach(async (entry) => {
@@ -186,6 +190,8 @@ module task {
     if (!config || !config.dest || config.dest.length == 0) {
       return
     }
+    log.trace('sanitise package.json')
+
     const path = config.dest
     if (!(await fs.pathExists(path))) {
       log.warn('No ' + path + ', skipping sanitise')
@@ -213,15 +219,18 @@ module task {
       if (err) return log.error(err)
       log.info('wrote sanitised ' + path)
     })
+
+    log.trace('sanitise package.json done')
   }
 
   export async function updateFiles(updates: UpdateConfig[]) {
+    log.trace('update files')
     updates.forEach(async (update, index) => {
       if (!update.match || update.match.length == 0) {
         log.warn(`No 'find' for update [${index}]`, JSON.stringify(update))
         return
       }
-      const files = await util.findFiles(update)
+      const files = util.findFiles(update)
       files.forEach(async (entry) => {
         const srcContent: string = await fs.readFile(entry.src, {
           encoding: update.encoding || 'utf-8',
@@ -261,6 +270,8 @@ module task {
         }
       })
     })
+
+    log.trace('update files done')
   }
 }
 
@@ -273,11 +284,11 @@ module util {
       throw new Error(errMsg)
     }
   }
-  export async function findFiles(
+  export function findFiles(
     include: HasSrcInclude & Partial<HasDestDir> & Partial<HasTarget>
-  ): Promise<CopyTarget[]> {
+  ): CopyTarget[] {
     const cleanInclude = sanitiseInclude(include)
-    const found = await glob(cleanInclude.includes, { cwd: cleanInclude.dir })
+    const found = glob.sync(cleanInclude.includes, { cwd: cleanInclude.dir })
 
     const results: CopyTarget[] = []
     found.forEach((file) => {
@@ -345,27 +356,31 @@ module log {
     if (!logEnabled) {
       return
     }
-    console.log(chalk.grey('[merge.ts] [TRACE] ', ...args))
+    console.log(chalk.grey('[merge.ts] [TRACE]', ...args))
   }
 
   export function info(...args: any) {
     if (!logEnabled) {
       return
     }
-    console.log('[merge.ts] ', ...args)
+    console.log('[merge.ts]', ...args)
   }
 
   export function warn(...args: any) {
-    console.log(chalk.magenta('[merge.ts] [WARN] ', ...args))
+    console.log(chalk.magenta('[merge.ts] [WARN]', ...args))
   }
 
   export function error(...args: any) {
-    console.log(chalk.red('[merge.ts] [ERROR] ', ...args))
+    console.log(chalk.red('[merge.ts] [ERROR]', ...args))
   }
 }
 
-await task.copyFiles(distConfig?.copy || distDefaults.copy)
-await task.sanitisePackageJson(
-  distConfig.packageJson || distDefaults.packageJson
-)
-await task.updateFiles(distConfig.update || distDefaults.update)
+async function main() {
+  await task.copyFiles(distConfig?.copy || distDefaults.copy)
+  await task.sanitisePackageJson(
+    distConfig.packageJson || distDefaults.packageJson
+  )
+  await task.updateFiles(distConfig.update || distDefaults.update)
+}
+
+main().then(() => log.trace('done'))
