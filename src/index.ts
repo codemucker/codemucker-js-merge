@@ -151,13 +151,13 @@ const logEnabled =
     : distConfig?.debug === true || (distConfig?.debug as any) == 'true'
 
 const isInfo = logEnabled
-const isTrace = logEnabled
+const isTrace = false
 
 module task {
   //TODO:prevent accessing outside of package dir
 
   export async function copyFiles(copySources: CopyConfig[]) {
-    log.info('copy files')
+    log.trace('copy files')
     const files: CopyTarget[] = []
     for (const srcEntry of copySources) {
       const found = await util.findFiles(srcEntry)
@@ -174,6 +174,7 @@ module task {
   }
 
   export async function deleteFiles(deleteSources: DeleteConfig[]) {
+    log.trace('delete files')
     const files: CopyTarget[] = []
     for (const srcEntry of deleteSources) {
       const found = await util.findFiles(srcEntry)
@@ -184,6 +185,7 @@ module task {
       util.checkWithinRootDirOrThrow(entry.src)
       await fs.remove(fspath.resolve(entry.src))
     }
+    log.trace('delete files done')
   }
 
   export async function sanitisePackageJson(
