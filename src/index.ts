@@ -150,6 +150,9 @@ const logEnabled =
     ? distDefaults.debug
     : distConfig?.debug === true || (distConfig?.debug as any) == 'true'
 
+const isInfo = logEnabled
+const isTrace = logEnabled
+
 module task {
   //TODO:prevent accessing outside of package dir
 
@@ -351,14 +354,14 @@ module util {
 
 module log {
   export function trace(...args: any) {
-    if (!logEnabled) {
+    if (!isTrace) {
       return
     }
     console.log(chalk.grey('[merge.ts] [TRACE]', ...args))
   }
 
   export function info(...args: any) {
-    if (!logEnabled) {
+    if (!isInfo) {
       return
     }
     console.log('[merge.ts]', ...args)
