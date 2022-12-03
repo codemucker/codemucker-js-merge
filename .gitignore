@@ -1,0 +1,18 @@
+build
+dist
+node_modules/
+
+# other editors
+~$*
+*~
+
+# random
+
+*.log
+out.txt
+
+# eclipse
+.bin/
+.settings/
+.project
+.classpath

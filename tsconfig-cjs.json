@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig-base.json",
+  "compileOnSave": true,
+  "compilerOptions": {
+    "outDir": "build/cjs",
+    /* for compatibility see http://kangax.github.io/compat-table/es2016plus/ */
+    "module": "CommonJS",
+    "target": "ES2015"
+  }
+}

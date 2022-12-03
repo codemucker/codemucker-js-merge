@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "build/mjs",
+    /* for compatibility see http://kangax.github.io/compat-table/es2016plus/ */
+    "module": "ESNext",
+    "target": "ESNext"
+  }
+}
