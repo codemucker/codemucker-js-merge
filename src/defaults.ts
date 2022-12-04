@@ -30,7 +30,6 @@ export const defaults: PackageJson = {
   },
   '@codemucker/merge/default/dist/module': {
     extends: undefined,
-    applyBefore: ['@codemucker/merge/install'],
     packageJson: {
       dest: 'build/release/package.json',
       excludeNodes: [
@@ -96,11 +95,11 @@ export const defaults: PackageJson = {
 
   '@codemucker/merge/default/install/module': {
     extends: undefined,
-    packageJson: {
-      dest: 'package.json',
-      excludeNodes: ['name', 'repository', 'keywords', 'description'],
-      includeNodes: [],
-    },
+    // packageJson: {
+    //   dest: 'package.json',
+    //   excludeNodes: ['name', 'repository', 'keywords', 'description'],
+    //   includeNodes: [],
+    // },
     copy: [],
     update: [],
   },

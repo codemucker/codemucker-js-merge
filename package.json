@@ -1,9 +1,20 @@
 {
+  "name": "@codemucker/merge",
+  "description": "Make it easier to build npm packages",
   "license": "MIT",
   "version": "0.1.1",
   "authors": [
     "Bert van Brakel"
   ],
+  "keywords": [
+    "npm",
+    "dist",
+    "package"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:codemucker/codemucker-js-merge.git"
+  },
   "private": false,
   "main": "./dist/cjs/index.js",
   "module": "./dist/mjs/index.mjs",
