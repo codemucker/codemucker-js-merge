@@ -6,7 +6,7 @@ import {
   HasDryRun,
   HasSrcDir,
   SanitisePackageJsonTaskConfig,
-  UpdateTaskItem
+  UpdateTaskItem,
 } from '@/model'
 import * as util from '@/util'
 import fs from 'fs-extra'
@@ -40,7 +40,7 @@ export async function copyFiles(
       const errMsg = `expected to find at least ${util.getMinNumMatches(
         item
       )} item(s), but was ${found.length}, and was marked as 'required'`
-      taskLog.error(errMsg, { configKey: opts.currentKey, item })
+      taskLog.error(errMsg, { configKey: opts.currentKey, item, found })
       throw new Error(errMsg)
     }
     for (const result of found) {
@@ -117,8 +117,14 @@ export async function updateFiles(
       taskLog.debug('processing: ' + item.label)
     }
 
-    if (!item.expression || item.expression.length == 0) {
-      log.warn(`No 'find' for update [${index}]`, JSON.stringify(item))
+    const expressions = item.expression
+      ? Array.isArray(item.expression)
+        ? item.expression
+        : [item.expression]
+      : undefined
+
+    if (!expressions || expressions.length == 0 || expressions[0].length == 0) {
+      log.warn(`No 'expression' for update [${index}]`, JSON.stringify(item))
       return
     }
     const found = await util.findFiles(item, opts.defaults)
@@ -126,7 +132,7 @@ export async function updateFiles(
       const errMsg = `expected to find at least ${util.getMinNumMatches(
         item
       )} item(s), but was ${found.length}, and was marked as 'required'`
-      taskLog.error(errMsg, { configKey: opts.currentKey, item })
+      taskLog.error(errMsg, { configKey: opts.currentKey, item, found })
       throw new Error(errMsg)
     }
     for (const result of found) {
@@ -135,23 +141,36 @@ export async function updateFiles(
       })
       let newContent = srcContent
 
+      if (!item.expressionType) {
+        //try to detect from file extension
+        if (result.src.endsWith('.json')) {
+          item.expressionType = 'json'
+        } else if (result.src.endsWith('.properties')) {
+          item.expressionType = 'text'
+        }
+      }
+
       if (
         !item.expressionType ||
         item.expressionType == 'text' ||
         item.expressionType == 're'
       ) {
-        const findExpression =
-          item.expressionType == 're'
-            ? new RegExp(item.expression, 'g')
-            : item.expression
+        for (const expression of expressions) {
+          const findExpression =
+            item.expressionType == 're'
+              ? new RegExp(expression, 'g')
+              : expression
 
-        newContent = srcContent.replace(findExpression, item.value || '')
+          newContent = srcContent.replace(findExpression, item.value || '')
+        }
       } else if (item.expressionType == 'json') {
         const jsonContent = JSON.parse(srcContent)
         const replaceNodes = {} as {
           [expression: string]: any
         }
-        replaceNodes[item.expression] = item.value
+        for (const expression of expressions) {
+          replaceNodes[expression] = item.value
+        }
 
         util.jsonReplaceNodes(jsonContent, replaceNodes)
 
@@ -177,7 +196,8 @@ export async function updateFiles(
 export async function sanitisePackageJson(
   opts: {
     config?: SanitisePackageJsonTaskConfig
-  } & HasDryRun & RunContext
+  } & HasDryRun &
+    RunContext
 ) {
   if (!opts.config || !opts.config.dest || opts.config.dest.length == 0) {
     return

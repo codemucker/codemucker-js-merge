@@ -78,6 +78,21 @@
     "watch": "1.0.2"
   },
   "@codemucker/merge/dist": {
-    "applyBefore": "@codemucker/merge/default/ts/module/dist"
+    "applyBefore": "@codemucker/merge/default/pnpm-ts-module-dist",
+    "copy": [
+      {
+        "label": "copy templates",
+        "include": [
+          "LICENSE*",
+          "tsconfig.*",
+          ".prettierignore",
+          ".prettierrc.cjs",
+          ".npmignore",
+          "package.json"
+        ],
+        "required": true,
+        "dest": "build/release/dist/templates"
+      }
+    ]
   }
 }

@@ -61,12 +61,13 @@ export type DeleteTaskItem = HasSrcInclude & HasLoggingLabel
 export type UpdateTaskItem = HasSrcInclude &
   Partial<HasDestDir> &
   Partial<HasTarget> &
+  Partial<HasPackageDependency> &
   Partial<HasRequired> &
   HasLoggingLabel & {
     // which matcher to
     expressionType?: 're' | 'text' | 'json'
-    // the match expression
-    expression: string
+    // the match expression. If an array, then they are treated as indiviual expressions
+    expression: string | string[]
     //what to replace any matches with
     value?: any
     //what the file encoding is

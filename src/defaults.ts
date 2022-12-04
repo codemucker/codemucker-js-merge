@@ -28,22 +28,8 @@ export const defaults: PackageJson = {
     extends: '@codemucker/merge/default',
     logLevel: 'fatal',
   },
-  '@codemucker/merge/default/ts/module/dist': {
+  '@codemucker/merge/default/pnpm-ts-module-dist': {
     extends: undefined,
-    packageJson: {
-      dest: 'build/release/package.json',
-      excludeNodes: [
-        'scripts',
-        'type',
-        'files',
-        'devDependencies',
-        'scripts',
-        'build',
-        'settings',
-        'config',
-        '@codemucker/*',
-      ] as string[],
-    },
     copy: [
       {
         label: 'built commonjs files',
@@ -80,6 +66,22 @@ export const defaults: PackageJson = {
     delete: [],
     update: [
       {
+        include: 'build/release/package.json',
+        expression: [
+          'scripts',
+          'type',
+          'files',
+          'devDependencies',
+          'scripts',
+          'build',
+          'settings',
+          'config',
+          '@codemucker/*',
+        ],
+        value: undefined,
+        required: true,
+      },
+      {
         label: 'fixup source maps',
         dir: 'build/release/',
         include: '**.js.map',
@@ -91,19 +93,44 @@ export const defaults: PackageJson = {
     defaultSrc: './',
     defaultDest: 'build/release/',
   },
-
-  '@codemucker/merge/default/ts/module/install': {
+  '@codemucker/merge/default/pnpm-ts-module-install': {
     extends: undefined,
-    copy: [],
-    update: [],
+    copy: [
+      {
+        package: '@codemucker/merge',
+        label: 'code setup',
+        dir: 'assets',
+        include: [
+          'LICENSE*',
+          'tsconfig.*',
+          '.prettierignore',
+          '.prettierrc.cjs',
+          '.npmignore',
+        ],
+        dest: '.',
+        required: true,
+      },
+    ],
+    update: [
+      {
+        package: '@codemucker/merge',
+        label: 'copy scripts block',
+        dir: '.',
+        include: 'package.json',
+        dest: '.',
+        expression: 'scripts',
+        value: '???', //todo: where to get the node from?
+        required: true,
+      },
+    ],
   },
   '@codemucker/merge/none': {
     extends: '@codemucker/merge/default/none',
   },
   '@codemucker/merge/dist': {
-    extends: '@codemucker/merge/default/ts/module/dist',
+    extends: '@codemucker/merge/default/pnpm-ts-module-dist',
   },
   '@codemucker/merge/install': {
-    extends: '@codemucker/merge/default/ts/module/install',
+    extends: '@codemucker/merge/default/pnpm-ts-module-install',
   },
 }
