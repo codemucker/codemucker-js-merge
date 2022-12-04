@@ -150,6 +150,8 @@ program
       logLevel,
       dryRun,
     })
+
+    log.info('complete')
   })
 
 program
