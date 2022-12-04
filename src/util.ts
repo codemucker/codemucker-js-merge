@@ -1,20 +1,18 @@
-import deepmerge from 'deepmerge'
-import glob from 'fast-glob'
-import fspath from 'path'
 import { defaults, hardDefaults } from '@/defaults'
 import { log, Logger } from '@/logging'
 import {
   CopyTarget,
   HasDefaultSrcAndDest,
   HasDestDir,
-  HasLogLevel,
-  HasSrcDir,
-  HasSrcInclude,
+  HasLogLevel, HasPackageDependency, HasSrcDir, HasSrcInclude,
   HasTarget,
   MergeConfig,
   PackageJson,
-  ROOT_DIR,
+  ROOT_DIR
 } from '@/model'
+import deepmerge from 'deepmerge'
+import glob from 'fast-glob'
+import fspath from 'path'
 
 //if the given path is not within the project root, then throw an error
 export function checkWithinRootDirOrThrow(path: string) {
@@ -28,12 +26,19 @@ export function checkWithinRootDirOrThrow(path: string) {
 
 //find all the files matching the given include rules
 export async function findFiles(
-  include: HasSrcInclude & Partial<HasDestDir> & Partial<HasTarget>,
+  include: HasSrcInclude &
+    Partial<HasDestDir> &
+    Partial<HasTarget> &
+    Partial<HasPackageDependency>,
   defaults: HasDestDir & HasSrcDir
 ): Promise<CopyTarget[]> {
-  const dir = ensureEndsWithSlash(include.dir || defaults.dir)
+  const pkgDir = include.package
+    ? getDependencyPath(include.package)
+    : undefined
+  let dir = include.dir || defaults.dir
+  dir = ensureEndsWithSlash(pkgDir ? pkgDir + dir : dir)
   const dest = ensureEndsWithSlash(include.dest || defaults.dest)
-  const includes = sanitiseIncludes(include.include)
+  const includes = includesToArray(include.include)
 
   const found = await glob(includes, { cwd: dir })
 
@@ -47,7 +52,7 @@ export async function findFiles(
   return results
 }
 
-function sanitiseIncludes(includes: undefined | string | string[]): string[] {
+function includesToArray(includes: undefined | string | string[]): string[] {
   if (typeof includes == 'string') {
     return [includes]
   } else if (Array.isArray(includes)) {
@@ -57,11 +62,31 @@ function sanitiseIncludes(includes: undefined | string | string[]): string[] {
   }
 }
 
+export function getMinNumMatches(include: HasSrcInclude): number {
+  if (!include.include) {
+    return 1
+  }
+  //count num non wildcards
+  let min = 0
+  const includes = includesToArray(include.include)
+  for (const inc of includes) {
+    if (inc == '*' || inc == '**/*') {
+      continue
+    }
+    min++
+  }
+  return min > 0 ? min : 1
+}
+
 function ensureEndsWithSlash(s: string): string {
   if (!s.endsWith('/')) {
     return s + '/'
   }
   return s
+}
+
+function getDependencyPath(dep: string): string {
+  return ensureEndsWithSlash(ROOT_DIR + '/node_modules/' + dep)
 }
 
 export function getMergedConfig(

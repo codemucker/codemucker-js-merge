@@ -1,16 +1,12 @@
-import { LogLevel } from '@/logging'
+import { log, LogLevel, setLogLevel } from '@/logging'
+import {
+  HasDestDir, HasDryRun, HasSrcDir,
+  MergeConfig, PackageJson, ROOT_DIR
+} from '@/model'
+import * as task from '@/tasks'
+import { getMergedConfig } from '@/util'
 import { program } from 'commander'
 import fs from 'fs-extra'
-import { log, setLogLevel } from '@/logging'
-import {
-  PackageJson,
-  HasDestDir,
-  HasSrcDir,
-  MergeConfig,
-  HasDryRun,
-} from '@/model'
-import { getMergedConfig } from '@/util'
-import * as task from '@/tasks'
 
 // Links:
 //  - https://www.sensedeep.com/blog/posts/2021/how-to-create-single-source-npm-module.html
@@ -19,7 +15,7 @@ import * as task from '@/tasks'
 //const distDefaults = defaults['@codemucker/merge/dist']
 
 const packageJson: PackageJson = JSON.parse(
-  fs.readFileSync('package.json', 'utf8')
+  fs.readFileSync(ROOT_DIR + '/package.json', 'utf8')
 )
 
 async function commandRun(
@@ -76,8 +72,9 @@ async function runConfig(opts: {
   //before configs
   const applyBefore = config.applyBefore
   if (applyBefore) {
-    log.debug('applyBefore:', applyBefore)
-    for (const beforeConfigKey of applyBefore) {
+    const keys = typeof applyBefore == 'string' ? [applyBefore] : applyBefore
+    log.debug('applyBefore:', keys)
+    for (const beforeConfigKey of keys) {
       const beforeConfig = getMergedConfig(packageJson, beforeConfigKey)
       await runConfig({
         ...opts,
@@ -94,22 +91,32 @@ async function runConfig(opts: {
       items: config.copy,
       defaults: opts.defaults,
       dryRun: opts.dryRun,
+      currentKey: configKey,
+    })
+    await task.deleteFiles({
+      items: config.delete,
+      defaults: opts.defaults,
+      dryRun: opts.dryRun,
+      currentKey: configKey,
     })
     await task.sanitisePackageJson({
       config: config.packageJson,
       dryRun: opts.dryRun,
+      currentKey: configKey,
     })
     await task.updateFiles({
       items: config.update,
       defaults: opts.defaults,
       dryRun: opts.dryRun,
+      currentKey: configKey,
     })
   }
 
   //after configs
   const applyAfter = config.applyAfter
   if (applyAfter) {
-    log.debug('applyAfter:', applyAfter)
+    const keys = typeof applyAfter == 'string' ? [applyAfter] : applyAfter
+    log.debug('applyAfter:', keys)
     for (const afterConfigKey of applyAfter) {
       const afterConfig = getMergedConfig(packageJson, afterConfigKey)
       await runConfig({

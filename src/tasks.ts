@@ -6,17 +6,21 @@ import {
   HasDryRun,
   HasSrcDir,
   SanitisePackageJsonTaskConfig,
-  UpdateTaskItem,
+  UpdateTaskItem
 } from '@/model'
 import * as util from '@/util'
 import fs from 'fs-extra'
 import fspath from 'path'
 
+export type RunContext = {
+  currentKey: string
+}
 export async function copyFiles(
   opts: {
     items: CopyTaskItem[] | undefined
     defaults: HasDestDir & HasSrcDir
-  } & HasDryRun
+  } & HasDryRun &
+    RunContext
 ) {
   if (!opts.items) {
     return
@@ -32,13 +36,19 @@ export async function copyFiles(
     }
 
     const found = await util.findFiles(item, opts.defaults)
+    if (item.required && found.length < util.getMinNumMatches(item)) {
+      const errMsg = `expected to find at least ${util.getMinNumMatches(
+        item
+      )} item(s), but was ${found.length}, and was marked as 'required'`
+      taskLog.error(errMsg, { configKey: opts.currentKey, item })
+      throw new Error(errMsg)
+    }
     for (const result of found) {
       if (item.overwite == false && (await fs.pathExists(result.target))) {
         taskLog.debug(
           `Skipping as '${result.target}' already exists and 'overwrite' is set to false`
         )
       } else {
-        taskLog.trace('copying ' + result.src + ' to ' + result.target)
         util.checkWithinRootDirOrThrow(result.src)
         if (opts.dryRun) {
           taskLog.info(`would of copied '${result.src}' to '${result.target}'`)
@@ -57,7 +67,8 @@ export async function deleteFiles(
   opts: {
     items: DeleteTaskItem[] | undefined
     defaults: HasDestDir & HasSrcDir
-  } & HasDryRun
+  } & HasDryRun &
+    RunContext
 ) {
   if (!opts.items) {
     return
@@ -89,7 +100,8 @@ export async function updateFiles(
   opts: {
     items: UpdateTaskItem[] | undefined
     defaults: HasDestDir & HasSrcDir
-  } & HasDryRun
+  } & HasDryRun &
+    RunContext
 ) {
   if (!opts.items) {
     return
@@ -110,6 +122,13 @@ export async function updateFiles(
       return
     }
     const found = await util.findFiles(item, opts.defaults)
+    if (item.required && found.length < util.getMinNumMatches(item)) {
+      const errMsg = `expected to find at least ${util.getMinNumMatches(
+        item
+      )} item(s), but was ${found.length}, and was marked as 'required'`
+      taskLog.error(errMsg, { configKey: opts.currentKey, item })
+      throw new Error(errMsg)
+    }
     for (const result of found) {
       const srcContent: string = await fs.readFile(result.src, {
         encoding: item.encoding || 'utf-8',
@@ -158,7 +177,7 @@ export async function updateFiles(
 export async function sanitisePackageJson(
   opts: {
     config?: SanitisePackageJsonTaskConfig
-  } & HasDryRun
+  } & HasDryRun & RunContext
 ) {
   if (!opts.config || !opts.config.dest || opts.config.dest.length == 0) {
     return

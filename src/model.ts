@@ -28,8 +28,8 @@ export type HasExtends = {
 export type MergeConfig = Partial<HasLogLevel> &
   Partial<HasExtends> & {
     //parent configs to apply
-    applyBefore?: string[]
-    applyAfter?: string[]
+    applyBefore?: string | string[]
+    applyAfter?: string | string[]
     packageJson?: MergePackageJsonConfig
     copy?: CopyTaskItem[]
     delete?: DeleteTaskItem[]
@@ -43,10 +43,14 @@ export type HasSrcDir = { dir: string }
 export type HasSrcInclude = Partial<HasSrcDir> & { include?: string | string[] }
 export type HasDestDir = { dest: string }
 export type HasTarget = { target: string }
+export type HasPackageDependency = { package: string }
+export type HasRequired = { required: boolean }
 
 export type CopyTaskItem = HasSrcInclude &
   Partial<HasDestDir> &
   Partial<HasTarget> &
+  Partial<HasPackageDependency> &
+  Partial<HasRequired> &
   HasLoggingLabel & {
     //if set to false, then if the target exists, don't overwrite
     overwite?: boolean
@@ -57,6 +61,7 @@ export type DeleteTaskItem = HasSrcInclude & HasLoggingLabel
 export type UpdateTaskItem = HasSrcInclude &
   Partial<HasDestDir> &
   Partial<HasTarget> &
+  Partial<HasRequired> &
   HasLoggingLabel & {
     // which matcher to
     expressionType?: 're' | 'text' | 'json'

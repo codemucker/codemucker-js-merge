@@ -16,6 +16,7 @@
     "url": "git@github.com:codemucker/codemucker-js-merge.git"
   },
   "private": false,
+  "support": true,
   "main": "./dist/cjs/index.js",
   "module": "./dist/mjs/index.mjs",
   "types": "./dist/mjs/index.d.ts",
@@ -53,7 +54,6 @@
     "commander": "^9.4.1",
     "deepmerge": "^4.2.2",
     "fast-glob": "^3.2.12",
-    "fs": "0.0.1-security",
     "fs-extra": "^11.1.0",
     "glob": "^8.0.3",
     "path": "^0.12.7",
@@ -78,6 +78,6 @@
     "watch": "1.0.2"
   },
   "@codemucker/merge/dist": {
-    "extends": "@codemucker/merge/default/dist/module"
+    "applyBefore": "@codemucker/merge/default/dist/module",
   }
 }

@@ -1,0 +1,21 @@
+{
+  "versions": [
+    {
+      "version": "*",
+      "target": {
+        "node": "none"
+      },
+      "response": {
+        "type": "time-permitting",
+        "paid": false,
+        "contact": {
+          "name": "Volunteers",
+          "url": "https://github.com/codemucker/codemucker-js-merge"
+        }
+      },
+      "backing": {
+        "hobby": "https://github.com/codemucker/codemucker-js-merge"
+      }
+    }
+  ]
+}
