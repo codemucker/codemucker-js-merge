@@ -67,6 +67,6 @@
     "watch": "1.0.2"
   },
   "@codemucker/merge/dist": {
-    "extends": "@codemucker/merge/default/dist"
+    "extends": "@codemucker/merge/default/dist/module"
   }
 }

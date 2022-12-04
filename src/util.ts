@@ -15,7 +15,6 @@ import {
   PackageJson,
   ROOT_DIR,
 } from '@/model'
-import { config } from 'process'
 
 //if the given path is not within the project root, then throw an error
 export function checkWithinRootDirOrThrow(path: string) {
