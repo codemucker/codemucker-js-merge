@@ -40,8 +40,10 @@ export async function copyFiles(
       } else {
         taskLog.trace('copying ' + result.src + ' to ' + result.target)
         util.checkWithinRootDirOrThrow(result.src)
-        util.checkWithinRootDirOrThrow(result.target)
-        if (!opts.dryRun) {
+        if (opts.dryRun) {
+          taskLog.info(`would of copied '${result.src}' to '${result.target}'`)
+        } else {
+          taskLog.trace(`copying '${result.src}' to ''${result.target}`)
           await fs.copy(result.src, result.target, { preserveTimestamps: true })
         }
       }
@@ -70,9 +72,11 @@ export async function deleteFiles(
     }
     const found = await util.findFiles(item, opts.defaults)
     for (const result of found) {
-      taskLog.trace('deleting ' + result.src)
       util.checkWithinRootDirOrThrow(result.src)
-      if (!opts.dryRun) {
+      if (opts.dryRun) {
+        taskLog.info(`would of deleted '${result.src}'`)
+      } else {
+        taskLog.trace('deleting ' + result.src)
         await fs.remove(fspath.resolve(result.src))
       }
     }
@@ -138,10 +142,12 @@ export async function updateFiles(
       }
 
       if (srcContent != newContent) {
-        if (!opts.dryRun) {
+        if (opts.dryRun) {
+          taskLog.info(`would of updated '${result.src}'`)
+        } else {
           await fs.writeFile(result.src, newContent)
+          taskLog.debug('updated ' + result.target)
         }
-        taskLog.debug('updated ' + result.target)
       }
     }
   }
@@ -183,10 +189,12 @@ export async function sanitisePackageJson(
   util.jsonReplaceNodes(content, replaceNodes)
   const newContent = JSON.stringify(content, null, 2)
   taskLog.trace({ newContent })
-  if (!opts.dryRun) {
+  if (opts.dryRun) {
+    taskLog.debug(`would have written sanitised '${path}'`)
+  } else {
     await fs.writeFile(path, newContent)
+    taskLog.debug(`wrote sanitised '${path}'`)
   }
-  taskLog.debug(`wrote sanitised '${path}'`)
 
   taskLog.trace('end')
 }
