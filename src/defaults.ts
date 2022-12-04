@@ -28,7 +28,7 @@ export const defaults: PackageJson = {
     extends: '@codemucker/merge/default',
     logLevel: 'fatal',
   },
-  '@codemucker/merge/default/dist': {
+  '@codemucker/merge/default/dist/module': {
     extends: undefined,
     applyBefore: ['@codemucker/merge/install'],
     packageJson: {
@@ -94,7 +94,7 @@ export const defaults: PackageJson = {
     defaultDest: 'build/release/',
   },
 
-  '@codemucker/merge/default/install': {
+  '@codemucker/merge/default/install/module': {
     extends: undefined,
     packageJson: {
       dest: 'package.json',
@@ -108,9 +108,9 @@ export const defaults: PackageJson = {
     extends: '@codemucker/merge/default/none',
   },
   '@codemucker/merge/dist': {
-    extends: '@codemucker/merge/default/dist',
+    extends: '@codemucker/merge/default/dist/module',
   },
   '@codemucker/merge/install': {
-    extends: '@codemucker/merge/default/install',
+    extends: '@codemucker/merge/default/install/module',
   },
 }
