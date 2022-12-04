@@ -78,6 +78,6 @@
     "watch": "1.0.2"
   },
   "@codemucker/merge/dist": {
-    "applyBefore": "@codemucker/merge/default/dist/module",
+    "applyBefore": "@codemucker/merge/default/ts/module/dist"
   }
 }

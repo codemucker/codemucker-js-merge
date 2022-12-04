@@ -28,7 +28,7 @@ export const defaults: PackageJson = {
     extends: '@codemucker/merge/default',
     logLevel: 'fatal',
   },
-  '@codemucker/merge/default/dist/module': {
+  '@codemucker/merge/default/ts/module/dist': {
     extends: undefined,
     packageJson: {
       dest: 'build/release/package.json',
@@ -49,27 +49,32 @@ export const defaults: PackageJson = {
         label: 'built commonjs files',
         dir: 'build/mjs/src',
         dest: 'build/release/dist/mjs',
+        required: true,
       },
       {
         label: 'built esm files',
         dir: 'build/cjs/src',
         dest: 'build/release/dist/cjs',
+        required: true,
       },
       {
         label: 'common assets',
         include: ['LICENSE', 'README*', 'package.json'],
         dest: 'build/release/',
+        required: true,
       },
       { label: 'source code', dir: 'src/', dest: 'build/release/src/' },
       {
         label: 'commonjs package.json',
         include: 'src/package.cjs.json',
         target: 'build/release/dist/cjs/package.json',
+        required: true,
       },
       {
         label: 'esm package.json',
         include: 'src/package.mjs.json',
         target: 'build/release/dist/mjs/package.json',
+        required: true,
       },
     ],
     delete: [],
@@ -82,24 +87,13 @@ export const defaults: PackageJson = {
         expression: '../../',
         value: '',
       },
-      // {
-      //   include: 'build/release/package.json',
-      //   matchType: 'json',
-      //   match: 'private',
-      //   replace: true,
-      // },
     ] as UpdateTaskItem[],
     defaultSrc: './',
     defaultDest: 'build/release/',
   },
 
-  '@codemucker/merge/default/install/module': {
+  '@codemucker/merge/default/ts/module/install': {
     extends: undefined,
-    // packageJson: {
-    //   dest: 'package.json',
-    //   excludeNodes: ['name', 'repository', 'keywords', 'description'],
-    //   includeNodes: [],
-    // },
     copy: [],
     update: [],
   },
@@ -107,9 +101,9 @@ export const defaults: PackageJson = {
     extends: '@codemucker/merge/default/none',
   },
   '@codemucker/merge/dist': {
-    extends: '@codemucker/merge/default/dist/module',
+    extends: '@codemucker/merge/default/ts/module/dist',
   },
   '@codemucker/merge/install': {
-    extends: '@codemucker/merge/default/install/module',
+    extends: '@codemucker/merge/default/ts/module/install',
   },
 }
