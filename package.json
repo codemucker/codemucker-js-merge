@@ -1,20 +1,9 @@
 {
-  "name": "@codemucker/merge",
-  "description": "Make it easier to build npm packages",
   "license": "MIT",
   "version": "0.1.1",
   "authors": [
     "Bert van Brakel"
   ],
-  "keywords": [
-    "npm",
-    "dist",
-    "package"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:codemucker/codemucker-js-merge.git"
-  },
   "private": false,
   "main": "./dist/cjs/index.js",
   "module": "./dist/mjs/index.mjs",
@@ -45,31 +34,39 @@
     "clean": "rm -fR dist/* && rm -fR build/*  && rm -fR node_modules/*",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json  && pnpm run build:dist",
     "build:watch": "tsc --watch",
-    "build:dist": "ts-node-esm src/index.ts",
+    "build:dist": "tsx src/index.ts run dist",
     "test": "pnpm run build && jest --verbose=true --detectOpenHandles --coverageDirectory build/jest-coverage",
     "test:watch": "watch 'pnpm run test' ./src/ ./test/"
   },
   "dependencies": {
-    "chalk": "^5.1.2",
+    "commander": "^9.4.1",
+    "deepmerge": "^4.2.2",
     "fast-glob": "^3.2.12",
     "fs": "0.0.1-security",
     "fs-extra": "^11.1.0",
     "glob": "^8.0.3",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "tslog": "^4.4.4"
   },
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.0.0",
     "@tsconfig/node-lts-strictest-esm": "^18.12.1",
     "@types/fs-extra": "9.0.13",
     "@types/glob": "^8.0.0",
     "@types/jest": "^29.2.3",
     "@types/node": "18.11.9",
+    "@vue/compiler-sfc": "3.x",
     "jest": "^29.3.1",
     "prettier": "^2.7.1",
     "release-it": "^15.5.0",
     "shared-git-hooks": "^1.2.1",
     "ts-jest": "^29.0.3",
     "ts-node": "10.9.1",
+    "tsx": "^3.12.1",
     "typescript": "^4.9.3",
     "watch": "1.0.2"
+  },
+  "@codemucker/merge/dist": {
+    "extends": "@codemucker/merge/default/dist"
   }
 }

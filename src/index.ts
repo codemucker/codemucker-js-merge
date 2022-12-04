@@ -1,389 +1,170 @@
-import chalk from 'chalk'
-import glob from 'fast-glob'
+import { LogLevel } from '@/logging'
+import { program } from 'commander'
 import fs from 'fs-extra'
-import fspath from 'path'
+import { log, setLogLevel } from '@/logging'
+import {
+  PackageJson,
+  HasDestDir,
+  HasSrcDir,
+  MergeConfig,
+  HasDryRun,
+} from '@/model'
+import { getMergedConfig } from '@/util'
+import * as task from '@/tasks'
 
 // Links:
 //  - https://www.sensedeep.com/blog/posts/2021/how-to-create-single-source-npm-module.html
 //
-type PackageJson = {
-  '@codemucker/install'?: {
-    inherit?: string
-    packageJson?: MergePackageJsonConfig
-    copy?: CopyConfig[]
-    delete?: DeleteConfig[]
-    update?: UpdateConfig[]
-    debug?: boolean
-  }
-  '@codemucker/dist'?: {
-    inherit?: string
-    packageJson?: SanitisePackageJsonConfig
-    copy?: CopyConfig[]
-    delete?: DeleteConfig[]
-    update?: UpdateConfig[]
-    debug?: boolean
-  }
-}
 
-const ROOT_DIR = fspath.resolve('.')
-
-type HasSrcDir = { dir: string }
-type HasSrcInclude = Partial<HasSrcDir> & { include?: string | string[] }
-type HasDestDir = { dest: string }
-type HasTarget = { target: string }
-
-type CopyConfig = HasSrcInclude & Partial<HasDestDir> & Partial<HasTarget>
-type DeleteConfig = HasSrcInclude
-type UpdateConfig = HasSrcInclude &
-  Partial<HasDestDir> &
-  Partial<HasTarget> & {
-    matchType?: 're' | 'text' | 'json'
-    match: string
-    replace?: any
-    encoding?: BufferEncoding
-  }
-type SanitisePackageJsonConfig = {
-  dest?: string
-  excludeNodes?: string[]
-  replaceNodes?: { [pathExpression: string]: string | null | undefined }
-}
-type MergePackageJsonConfig = {
-  dest?: string
-  includeNodes?: string[]
-  excludeNodes?: string[]
-}
-
-type CopyTarget = { src: string; target: string }
-
-//various default groups one can chose from
-const DEFAULTS = {
-  distNone: {
-    debug: false,
-    packageJson: undefined,
-    copy: [],
-    modify: [],
-  },
-  installNone: {
-    debug: false,
-    packageJson: undefined,
-    copy: [],
-    modify: [],
-  },
-  '@codemucker/dist/mixed': {
-    debug: true,
-    inherit: undefined,
-    packageJson: {
-      dest: 'build/release/package.json',
-      excludeNodes: [
-        'scripts',
-        'type',
-        'files',
-        'devDependencies',
-        'scripts',
-        'build',
-        'settings',
-        'config',
-        '@codemucker/dist',
-        '@codemucker/install',
-      ] as string[],
-      replaceNodes: {} as { [expression: string]: string },
-    },
-    copy: [
-      { dir: 'build/mjs/src', dest: 'build/release/dist/mjs' },
-      { dir: 'build/cjs/src', dest: 'build/release/dist/cjs' },
-      {
-        include: ['LICENSE', 'README*', 'package.json'],
-        dest: 'build/release/',
-      },
-      { dir: 'src/', dest: 'build/release/src/' },
-      {
-        include: 'src/cjs.package.json',
-        target: 'build/release/dist/cjs/package.json',
-      },
-      {
-        include: 'src/mjs.package.json',
-        target: 'build/release/dist/mjs/package.json',
-      },
-    ],
-    delete: [],
-    update: [
-      {
-        dir: 'build/release/',
-        include: '**.js.map',
-        matchType: 'text',
-        match: '../../',
-        replace: '',
-      },
-      // {
-      //   include: 'build/release/package.json',
-      //   matchType: 'json',
-      //   match: 'private',
-      //   replace: true,
-      // },
-    ] as UpdateConfig[],
-    defaultSrc: './',
-    defaultDest: 'build/release/',
-  },
-  '@codemucker/install': {
-    debug: true,
-    inherit: undefined,
-    packageJson: {
-      dest: 'package.json',
-      excludeNodes: ['name', 'repository', 'keywords', 'description'],
-      replaceNodes: {},
-    },
-    copy: [],
-    modify: [],
-  },
-}
-
-const distDefaults = DEFAULTS['@codemucker/dist/mixed']
+//const distDefaults = defaults['@codemucker/merge/dist']
 
 const packageJson: PackageJson = JSON.parse(
   fs.readFileSync('package.json', 'utf8')
 )
 
-const distConfig = packageJson['@codemucker/dist'] || distDefaults
-
-const logEnabled =
-  distConfig?.debug == undefined
-    ? distDefaults.debug
-    : distConfig?.debug === true || (distConfig?.debug as any) == 'true'
-
-const isInfo = logEnabled
-const isTrace = false
-
-module task {
-  //TODO:prevent accessing outside of package dir
-
-  export async function copyFiles(copySources: CopyConfig[]) {
-    log.trace('copy files')
-    const files: CopyTarget[] = []
-    for (const srcEntry of copySources) {
-      const found = await util.findFiles(srcEntry)
-      files.push(...found)
-    }
-    for (const entry of files) {
-      log.info('copying ' + entry.src + ' to ' + entry.target)
-      util.checkWithinRootDirOrThrow(entry.src)
-      util.checkWithinRootDirOrThrow(entry.target)
-      await fs.copy(entry.src, entry.target, { preserveTimestamps: true })
-    }
-
-    log.trace('copy files done')
+async function main(
+  opts: {
+    configKey: string
+    logLevel?: LogLevel
+  } & HasDryRun
+) {
+  //forced via the commandline
+  if (opts.logLevel) {
+    setLogLevel(opts.logLevel)
+  }
+  const config = getMergedConfig(packageJson, opts.configKey)
+  const defaultsDrs = {
+    dir: config.defaultSrc,
+    dest: config.defaultDest,
   }
 
-  export async function deleteFiles(deleteSources: DeleteConfig[]) {
-    log.trace('delete files')
-    const files: CopyTarget[] = []
-    for (const srcEntry of deleteSources) {
-      const found = await util.findFiles(srcEntry)
-      files.push(...found)
-    }
-    for (const entry of files) {
-      log.info('deleting ' + entry.src)
-      util.checkWithinRootDirOrThrow(entry.src)
-      await fs.remove(fspath.resolve(entry.src))
-    }
-    log.trace('delete files done')
+  //use the defaults before, change based on the current config. Ignore if forced via the commandline
+  if (!opts.logLevel) {
+    setLogLevel(config.logLevel)
   }
 
-  export async function sanitisePackageJson(
-    config?: SanitisePackageJsonConfig
-  ) {
-    if (!config || !config.dest || config.dest.length == 0) {
-      return
-    }
-    log.trace('sanitise package.json')
-
-    const path = config.dest
-    if (!(await fs.pathExists(path))) {
-      log.warn('No ' + path + ', skipping sanitise')
-      return
-    }
-
-    const replaceNodes = Object.assign(
-      {},
-      config.replaceNodes || distDefaults.packageJson.replaceNodes
-    )
-
-    //convert the excludes into replace with 'null'
-    const excludeNodes =
-      config.excludeNodes || distDefaults.packageJson.excludeNodes
-    excludeNodes.forEach((path) => {
-      replaceNodes[path] = null
-    })
-
-    const content = JSON.parse(await fs.readFile(path, 'utf8'))
-    util.replaceNodes(content, replaceNodes)
-    const newContent = JSON.stringify(content, null, 2)
-    //log.info('newContent', newContent)
-
-    await fs.writeFile(path, newContent)
-    log.info('wrote sanitised ' + path)
-
-    log.trace('sanitise package.json done')
-  }
-
-  export async function updateFiles(updates: UpdateConfig[]) {
-    log.trace('update files')
-    let index = -1
-    for (const update of updates) {
-      index++
-      if (!update.match || update.match.length == 0) {
-        log.warn(`No 'find' for update [${index}]`, JSON.stringify(update))
-        return
-      }
-      const files = await util.findFiles(update)
-      for (const entry of files) {
-        const srcContent: string = await fs.readFile(entry.src, {
-          encoding: update.encoding || 'utf-8',
-        })
-        let newContent = srcContent
-
-        if (
-          !update.matchType ||
-          update.matchType == 'text' ||
-          update.matchType == 're'
-        ) {
-          const findExpression =
-            update.matchType == 're'
-              ? new RegExp(update.match, 'g')
-              : update.match
-
-          newContent = srcContent.replace(findExpression, update.replace || '')
-        } else if (update.matchType == 'json') {
-          const jsonContent = JSON.parse(srcContent)
-          const replaceNodes = {} as {
-            [expression: string]: any
-          }
-          replaceNodes[update.match] = update.replace
-
-          util.replaceNodes(jsonContent, replaceNodes)
-
-          newContent = JSON.stringify(jsonContent, null, 2)
-        } else {
-          throw new Error(`Unknown matcher type '${update.matchType}'`)
-        }
-
-        if (srcContent != newContent) {
-          await fs.writeFile(entry.src, newContent)
-          log.info('updated ' + entry.target)
-        }
-      }
-    }
-
-    log.trace('update files done')
-  }
+  await runConfig({
+    config,
+    configKey: opts.configKey,
+    defaults: defaultsDrs,
+    appliedConfigs: [],
+    dryRun: opts.dryRun,
+  })
 }
 
-module util {
-  export function checkWithinRootDirOrThrow(path: string) {
-    const fullPath = fspath.resolve(path)
-    if (!fullPath.startsWith(ROOT_DIR)) {
-      const errMsg = `Path '${fullPath}' (from '${path}') is not within the project root dir '${ROOT_DIR}'. Bailing as this looks malicious or a bug`
-      log.error(errMsg)
-      throw new Error(errMsg)
-    }
+async function runConfig(opts: {
+  config: MergeConfig
+  configKey: string
+  defaults: HasDestDir & HasSrcDir
+  dryRun: boolean
+  appliedConfigs: string[]
+}) {
+  const configKey = opts.configKey
+  const config = opts.config
+  log.debug(`in config: '${opts.configKey}'...`)
+  log.trace({ config })
+
+  //prevent inifinite loops
+  if (opts.appliedConfigs.includes(configKey)) {
+    log.warn(
+      `Recursive config found '${configKey}', ignoring. Config path: ${opts.appliedConfigs}`
+    )
+    return
   }
-  export async function findFiles(
-    include: HasSrcInclude & Partial<HasDestDir> & Partial<HasTarget>
-  ): Promise<CopyTarget[]> {
-    const cleanInclude = sanitiseInclude(include)
-    const found = await glob(cleanInclude.includes, { cwd: cleanInclude.dir })
+  opts.appliedConfigs.push(configKey)
 
-    const results: CopyTarget[] = []
-    for (const file of found) {
-      const src = cleanInclude.dir + file
-      //override the target if manually set
-      const target = include.target || cleanInclude.dest + file
-      results.push({ src, target })
-    }
-    return results
-  }
-
-  function sanitiseInclude(
-    include: HasSrcInclude & Partial<HasDestDir>
-  ): HasSrcDir & HasDestDir & { includes: string[] } {
-    const dir = ensureEndsWithSlash(include.dir || distDefaults.defaultSrc)
-    const dest = ensureEndsWithSlash(include.dest || distDefaults.defaultDest)
-
-    let includes: string[]
-    if (typeof include.include == 'string') {
-      includes = [include.include]
-    } else if (Array.isArray(include.include)) {
-      includes = include.include
-    } else {
-      includes = ['*', '**/*']
-    }
-
-    return { dir, dest, includes }
-  }
-
-  function ensureEndsWithSlash(s: string): string {
-    if (!s.endsWith('/')) {
-      return s + '/'
-    }
-    return s
-  }
-
-  export function replaceNodes(
-    content: any,
-    replaceNodes: { [expression: string]: any }
-  ) {
-    for (const expression in replaceNodes) {
-      let node = content
-      const parts = expression.split('.')
-      parts.forEach((part, index) => {
-        if (node == undefined || node == null) {
-          return
-        }
-        const last = index == parts.length - 1
-        if (last) {
-          const replaceValue = replaceNodes[expression]
-          if (replaceValue == undefined || replaceValue == null) {
-            log.trace(`Delete node '${expression}'`)
-            delete node[part]
-          } else {
-            log.trace(`Replace node '${expression}' with ${replaceValue}`)
-            node[part] = replaceValue
-          }
-        }
+  //before configs
+  const applyBefore = config.applyBefore
+  if (applyBefore) {
+    log.debug('applyBefore:', applyBefore)
+    for (const beforeConfigKey of applyBefore) {
+      const beforeConfig = getMergedConfig(packageJson, beforeConfigKey)
+      await runConfig({
+        ...opts,
+        config: beforeConfig,
+        configKey: beforeConfigKey,
       })
     }
   }
+
+  //main config
+  log.info(`running config: '${configKey}'...`)
+  {
+    await task.copyFiles({
+      items: config.copy,
+      defaults: opts.defaults,
+      dryRun: opts.dryRun,
+    })
+    await task.sanitisePackageJson({
+      config: config.packageJson,
+      dryRun: opts.dryRun,
+    })
+    await task.updateFiles({
+      items: config.update,
+      defaults: opts.defaults,
+      dryRun: opts.dryRun,
+    })
+  }
+
+  //after configs
+  const applyAfter = config.applyAfter
+  if (applyAfter) {
+    log.debug('applyAfter:', applyAfter)
+    for (const afterConfigKey of applyAfter) {
+      const afterConfig = getMergedConfig(packageJson, afterConfigKey)
+      await runConfig({
+        ...opts,
+        config: afterConfig,
+        configKey: afterConfigKey,
+      })
+    }
+  }
+
+  log.trace(`done running config: '${configKey}'...`)
 }
 
-module log {
-  export function trace(...args: any) {
-    if (!isTrace) {
-      return
-    }
-    console.log(chalk.grey('[merge.ts] [TRACE]', ...args))
-  }
+program
+  .name('codemucker-merge')
+  .description('merge/copy files/directories/packages')
+  .version('0.0.0')
+  //global options. Get via 'program.opts()'
+  .option('-l, --log-level [logLevel]', 'Force the log level')
 
-  export function info(...args: any) {
-    if (!isInfo) {
-      return
-    }
-    console.log('[merge.ts]', ...args)
-  }
-
-  export function warn(...args: any) {
-    console.log(chalk.magenta('[merge.ts] [WARN]', ...args))
-  }
-
-  export function error(...args: any) {
-    console.log(chalk.red('[merge.ts] [ERROR]', ...args))
-  }
-}
-
-async function main() {
-  await task.copyFiles(distConfig?.copy || distDefaults.copy)
-  await task.sanitisePackageJson(
-    distConfig.packageJson || distDefaults.packageJson
+program
+  .command('run')
+  .description('run the given merge')
+  .argument(
+    '<config>',
+    `the config (key) to run. Looks for a node '@codemucker/merge/<config>'`
   )
-  await task.updateFiles(distConfig.update || distDefaults.update)
-}
+  .option(
+    '--dry-run',
+    "(TODO) If set, don't actually apply any changes, just print what would have changed"
+  )
+  .action(async (configKey: string, commandOptions: any) => {
+    const logLevel = program.opts()['logLevel']
+    const dryRun = commandOptions['dryRun'] == true
 
-main().then(() => log.trace('done'))
+    await main({
+      configKey: `@codemucker/merge/${configKey}`,
+      logLevel,
+      dryRun,
+    })
+  })
+
+program
+  .command('defaults')
+  .description('print out the defaults values for the given key')
+  .argument(
+    '[config]',
+    `(TODO) the config (key) to lokup the defaults for. Looks for a node '@codemucker/merge/<config>'`,
+    '*'
+  )
+  .action(async (_configKey: string) => {})
+
+program
+  .command('keys')
+  .description('(TODO) print out all the available config keys')
+  .action(async (_configKey: string) => {})
+
+program.parse()

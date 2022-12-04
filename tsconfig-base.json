@@ -1,7 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "allowJs": true,
+    "allowJs": false,
+    //required?
+    "checkJs": false,
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "esModuleInterop": true,
@@ -23,9 +25,7 @@
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "noImplicitAny": true,
-    //required?
-    "checkJs": true,
-    
+        
     "baseUrl": ".",
     "types": ["node", "jest"],
     "paths": {

@@ -3,4 +3,6 @@ module.exports = {
   tabWidth: 2,
   semi: false,
   singleQuote: true,
+  importOrderSeparation: true,
+  importOrderSortSpecifiers: true,
 }
