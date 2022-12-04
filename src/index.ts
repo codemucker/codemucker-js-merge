@@ -22,7 +22,7 @@ const packageJson: PackageJson = JSON.parse(
   fs.readFileSync('package.json', 'utf8')
 )
 
-async function main(
+async function commandRun(
   opts: {
     configKey: string
     logLevel?: LogLevel
@@ -139,13 +139,13 @@ program
   )
   .option(
     '--dry-run',
-    "(TODO) If set, don't actually apply any changes, just print what would have changed"
+    "If set, don't actually apply any changes, just print what would have changed"
   )
   .action(async (configKey: string, commandOptions: any) => {
     const logLevel = program.opts()['logLevel']
     const dryRun = commandOptions['dryRun'] == true
 
-    await main({
+    await commandRun({
       configKey: `@codemucker/merge/${configKey}`,
       logLevel,
       dryRun,
@@ -156,10 +156,10 @@ program
 
 program
   .command('defaults')
-  .description('print out the defaults values for the given key')
+  .description('print out the default values for the given key')
   .argument(
     '[config]',
-    `(TODO) the config (key) to lokup the defaults for. Looks for a node '@codemucker/merge/<config>'`,
+    `(TODO) the config (key) to lookup the defaults for. Looks for a node '@codemucker/merge/<config>'`,
     '*'
   )
   .action(async (_configKey: string) => {})
