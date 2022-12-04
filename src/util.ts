@@ -15,6 +15,7 @@ import {
   PackageJson,
   ROOT_DIR,
 } from '@/model'
+import { config } from 'process'
 
 //if the given path is not within the project root, then throw an error
 export function checkWithinRootDirOrThrow(path: string) {
@@ -87,15 +88,26 @@ function getRawConfig(
   configKey: string
 ): Partial<MergeConfig> & Partial<HasDefaultSrcAndDest> {
   if (configKey.startsWith('@')) {
-    return pkg[configKey] || defaults[configKey] || {}
+    const cfg = pkg[configKey] || defaults[configKey] || undefined
+    if (!cfg) {
+      const erroMsg = `No merge config could be found for key '${configKey}'`
+      log.fatal(erroMsg)
+      throw new Error(erroMsg)
+    }
+    return cfg
   }
-  return (
+  const cfg =
     pkg[`@codemucker/merge/${configKey}`] ||
     defaults[`@codemucker/merge/${configKey}`] ||
     pkg[configKey] ||
     defaults[configKey] ||
-    {}
-  )
+    undefined
+  if (!cfg) {
+    const erroMsg = `No merge config could be found for key '${configKey}' or ${`@codemucker/merge/${configKey}`}`
+    log.fatal(erroMsg)
+    throw new Error(erroMsg)
+  }
+  return cfg
 }
 
 //update all the elements matching the given json node expression
