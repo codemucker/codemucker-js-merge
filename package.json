@@ -91,13 +91,20 @@
           ".npmignore",
           "package.json"
         ],
-        "dest": "build/release/dist/templates",
-        "required": true        
+        "dest": "build/release/templates",
+        "required": true
       },
       {
         "label": "scripts package.json",
         "include": "package.json",
-        "target": "build/release/dist/templates/package.scripts.json",
+        "target": "build/release/templates/package.scripts.json",
+        "required": true
+      },
+      {
+        "label": "esm and cjs package.json",
+        "dir": "src",
+        "include": "package.*.json",
+        "dest": "build/release/templates/",
         "required": true
       }
     ]

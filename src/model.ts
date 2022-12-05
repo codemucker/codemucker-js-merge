@@ -53,7 +53,7 @@ export type CopyTaskItem = HasSrcInclude &
   Partial<HasRequired> &
   HasLoggingLabel & {
     //if set to false, then if the target exists, don't overwrite
-    overwite?: boolean
+    overwrite?: boolean
   }
 
 export type DeleteTaskItem = HasSrcInclude & HasLoggingLabel

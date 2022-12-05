@@ -44,7 +44,7 @@ export async function copyFiles(
       throw new Error(errMsg)
     }
     for (const result of found) {
-      if (item.overwite == false && (await fs.pathExists(result.target))) {
+      if (item.overwrite == false && (await fs.pathExists(result.target))) {
         taskLog.debug(
           `Skipping as '${result.target}' already exists and 'overwrite' is set to false`
         )

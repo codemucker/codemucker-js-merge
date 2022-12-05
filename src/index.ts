@@ -1,3 +1,4 @@
+import { defaults } from './defaults'
 import { log, LogLevel, setLogLevel } from '@/logging'
 import {
   HasDestDir,
@@ -47,7 +48,7 @@ async function commandRun(
     config,
     configKey: opts.configKey,
     defaults: defaultsDrs,
-    appliedConfigs: [],
+    configsRun: [],
     dryRun: opts.dryRun,
   })
 }
@@ -57,7 +58,7 @@ async function runConfig(opts: {
   configKey: string
   defaults: HasDestDir & HasSrcDir
   dryRun: boolean
-  appliedConfigs: string[]
+  configsRun: string[]
 }) {
   const configKey = opts.configKey
   const config = opts.config
@@ -65,13 +66,13 @@ async function runConfig(opts: {
   log.trace({ config })
 
   //prevent inifinite loops
-  if (opts.appliedConfigs.includes(configKey)) {
+  if (opts.configsRun.includes(configKey)) {
     log.warn(
-      `Recursive config found '${configKey}', ignoring. Config path: ${opts.appliedConfigs}`
+      `Recursive config found '${configKey}', ignoring. Config path: ${opts.configsRun}`
     )
     return
   }
-  opts.appliedConfigs.push(configKey)
+  opts.configsRun.push(configKey)
 
   //before configs
   const runBefore = config.runBefore
@@ -161,18 +162,30 @@ program
   })
 
 program
-  .command('defaults')
+  .command('values')
   .description('print out the default values for the given key')
   .argument(
     '[config]',
-    `(TODO) the config (key) to lookup the defaults for. Looks for a node '@codemucker/merge/<config>'`,
+    `the config (key) to lookup the defaults for. Looks for a node '@codemucker/merge/<config>'. Or use '*' to show all configs`,
     '*'
   )
-  .action(async (_configKey: string) => {})
+  .action(async (configKey: string) => {
+    const keys = configKey == '*' ? Object.keys(defaults) : [configKey]
+    for (const key of keys) {
+      console.log(`Config for '${key}':`)
+      const config = getMergedConfig(packageJson, key)
+      console.log(config)
+    }
+  })
 
 program
   .command('keys')
-  .description('(TODO) print out all the available config keys')
-  .action(async (_configKey: string) => {})
+  .description('print out all the available config keys')
+  .action(async (_configKey: string) => {
+    console.log('available default configs:')
+    for (const [key] of Object.entries(defaults)) {
+      console.log(`   ${key}`)
+    }
+  })
 
 program.parse()

@@ -96,8 +96,8 @@ export const defaults: PackageJson = {
     copyFiles: [
       {
         fromPackage: '@codemucker/merge',
-        label: 'code setup',
-        dir: 'assets',
+        label: 'tooling config',
+        dir: 'templates',
         include: [
           'tsconfig.*',
           '.prettierignore',
@@ -106,23 +106,23 @@ export const defaults: PackageJson = {
         ],
         dest: '.',
         required: true,
-        overwite: true,
+        overwrite: true,
       },
       {
         fromPackage: '@codemucker/merge',
-        label: 'copy license',
-        dir: 'assets',
-        include: 'LICENSE*',
-        dest: '.',
+        label: 'esm & cjs package json',
+        dir: 'templates',
+        include: 'package.*.json*',
+        dest: 'src',
         required: true,
-        overwite: false,
+        overwrite: true,
       },
     ],
     updateFiles: [
       {
         label: 'merge scripts block',
         fromPackage: '@codemucker/merge',
-        fromFile: 'dist/templates/package.scripts.json',
+        fromFile: 'templates/package.scripts.json',
         fromExpression: 'scripts',
         dest: 'package.json',
         expression: 'scripts',
@@ -132,7 +132,7 @@ export const defaults: PackageJson = {
       {
         label: 'copy dependencies from devDependencies',
         fromPackage: '@codemucker/merge',
-        fromFile: 'dist/templates/package.scripts.json',
+        fromFile: 'templates/package.scripts.json',
         fromExpression: 'dependencies',
         dest: 'package.json',
         expression: 'devDpendencies',
