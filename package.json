@@ -47,6 +47,7 @@
     "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json  && pnpm run build:dist",
     "build:watch": "tsc --watch",
     "build:dist": "tsx src/index.ts run dist",
+    "build:dist:dryrun": "tsx src/index.ts run --dry-run dist",
     "test": "pnpm run build && jest --verbose=true --detectOpenHandles --coverageDirectory build/jest-coverage",
     "test:watch": "watch 'pnpm run test' ./src/ ./test/"
   },
@@ -78,8 +79,8 @@
     "watch": "1.0.2"
   },
   "@codemucker/merge/dist": {
-    "applyBefore": "@codemucker/merge/default/pnpm-ts-module-dist",
-    "copy": [
+    "runBefore": "@codemucker/merge/default/pnpm-ts-module-dist",
+    "copyFiles": [
       {
         "label": "copy templates",
         "include": [
@@ -90,8 +91,14 @@
           ".npmignore",
           "package.json"
         ],
-        "required": true,
-        "dest": "build/release/dist/templates"
+        "dest": "build/release/dist/templates",
+        "required": true        
+      },
+      {
+        "label": "scripts package.json",
+        "include": "package.json",
+        "target": "build/release/dist/templates/package.scripts.json",
+        "required": true
       }
     ]
   }

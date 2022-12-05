@@ -8,10 +8,9 @@ import {
 export const hardDefaults: MergeConfig & HasDefaultSrcAndDest = {
   logLevel: 'info',
   extends: undefined,
-  packageJson: undefined,
-  copy: [],
-  delete: [],
-  update: [],
+  copyFiles: [],
+  deleteFiles: [],
+  updateFiles: [],
   defaultSrc: '.',
   defaultDest: 'build/release/dist',
 }
@@ -20,9 +19,8 @@ export const hardDefaults: MergeConfig & HasDefaultSrcAndDest = {
 export const defaults: PackageJson = {
   '@codemucker/merge/default': {
     logLevel: 'info',
-    packageJson: undefined,
-    copy: [],
-    update: [],
+    copyFiles: [],
+    updateFiles: [],
   },
   '@codemucker/merge/default/none': {
     extends: '@codemucker/merge/default',
@@ -30,7 +28,7 @@ export const defaults: PackageJson = {
   },
   '@codemucker/merge/default/pnpm-ts-module-dist': {
     extends: undefined,
-    copy: [
+    copyFiles: [
       {
         label: 'built commonjs files',
         dir: 'build/mjs/src',
@@ -63,8 +61,8 @@ export const defaults: PackageJson = {
         required: true,
       },
     ],
-    delete: [],
-    update: [
+    deleteFiles: [],
+    updateFiles: [
       {
         include: 'build/release/package.json',
         expression: [
@@ -95,13 +93,12 @@ export const defaults: PackageJson = {
   },
   '@codemucker/merge/default/pnpm-ts-module-install': {
     extends: undefined,
-    copy: [
+    copyFiles: [
       {
-        package: '@codemucker/merge',
+        fromPackage: '@codemucker/merge',
         label: 'code setup',
         dir: 'assets',
         include: [
-          'LICENSE*',
           'tsconfig.*',
           '.prettierignore',
           '.prettierrc.cjs',
@@ -109,17 +106,37 @@ export const defaults: PackageJson = {
         ],
         dest: '.',
         required: true,
+        overwite: true,
+      },
+      {
+        fromPackage: '@codemucker/merge',
+        label: 'copy license',
+        dir: 'assets',
+        include: 'LICENSE*',
+        dest: '.',
+        required: true,
+        overwite: false,
       },
     ],
-    update: [
+    updateFiles: [
       {
-        package: '@codemucker/merge',
-        label: 'copy scripts block',
-        dir: '.',
-        include: 'package.json',
-        dest: '.',
+        label: 'merge scripts block',
+        fromPackage: '@codemucker/merge',
+        fromFile: 'dist/templates/package.scripts.json',
+        fromExpression: 'scripts',
+        dest: 'package.json',
         expression: 'scripts',
-        value: '???', //todo: where to get the node from?
+        stratagey: 'merge',
+        required: true,
+      },
+      {
+        label: 'copy dependencies from devDependencies',
+        fromPackage: '@codemucker/merge',
+        fromFile: 'dist/templates/package.scripts.json',
+        fromExpression: 'dependencies',
+        dest: 'package.json',
+        expression: 'devDpendencies',
+        stratagey: 'merge',
         required: true,
       },
     ],

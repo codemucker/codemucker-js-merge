@@ -1,3 +1,4 @@
+import * as json from '@/json'
 import { log } from '@/logging'
 import {
   CopyTaskItem,
@@ -5,7 +6,6 @@ import {
   HasDestDir,
   HasDryRun,
   HasSrcDir,
-  SanitisePackageJsonTaskConfig,
   UpdateTaskItem,
 } from '@/model'
 import * as util from '@/util'
@@ -53,13 +53,12 @@ export async function copyFiles(
         if (opts.dryRun) {
           taskLog.info(`would of copied '${result.src}' to '${result.target}'`)
         } else {
-          taskLog.trace(`copying '${result.src}' to ''${result.target}`)
+          taskLog.trace(`copying '${result.src}' to '${result.target}'`)
           await fs.copy(result.src, result.target, { preserveTimestamps: true })
         }
       }
     }
   }
-
   taskLog.trace('end')
 }
 
@@ -135,6 +134,16 @@ export async function updateFiles(
       taskLog.error(errMsg, { configKey: opts.currentKey, item, found })
       throw new Error(errMsg)
     }
+
+    let valueSrcFileContent: string | undefined
+    //read from other file
+    if (!item.value && item.fromFile) {
+      util.checkWithinRootDirOrThrow(item.fromFile)
+      valueSrcFileContent = await fs.readFile(item.fromFile, {
+        encoding: item.encoding || 'utf-8',
+      })
+    }
+
     for (const result of found) {
       const srcContent: string = await fs.readFile(result.src, {
         encoding: item.encoding || 'utf-8',
@@ -145,11 +154,20 @@ export async function updateFiles(
         //try to detect from file extension
         if (result.src.endsWith('.json')) {
           item.expressionType = 'json'
-        } else if (result.src.endsWith('.properties')) {
+        } else if (
+          result.src.endsWith('.properties') ||
+          result.src.endsWith('.env')
+        ) {
+          item.expressionType = 'property'
+        } else if (
+          result.src.endsWith('.txt') ||
+          result.src.endsWith('.md') ||
+          result.src.endsWith('.js') ||
+          result.src.endsWith('.jts')
+        ) {
           item.expressionType = 'text'
         }
       }
-
       if (
         !item.expressionType ||
         item.expressionType == 'text' ||
@@ -163,16 +181,62 @@ export async function updateFiles(
 
           newContent = srcContent.replace(findExpression, item.value || '')
         }
+      } else if (item.expressionType == 'property') {
+        for (const expression of expressions) {
+          //foo=bar
+          const propertyRegExp = new RegExp(
+            '(' + expression + '\\s*=\\s*)(.*)',
+            'g'
+          )
+          let replaceValue = item.value || ''
+
+          if (valueSrcFileContent) {
+            //TODO: allow using different expressions types for sourcing
+            const srcExpression = item.fromExpression || expression
+            replaceValue = readUtil.getProperty(
+              item.fromFile as string,
+              valueSrcFileContent,
+              srcExpression,
+              propertyRegExp,
+              item.required == true
+            )
+          }
+          newContent = srcContent.replace(
+            propertyRegExp,
+            (name, _existingValue) => {
+              return name + '"' + replaceValue + '"'
+            }
+          )
+        }
       } else if (item.expressionType == 'json') {
         const jsonContent = JSON.parse(srcContent)
-        const replaceNodes = {} as {
-          [expression: string]: any
-        }
+        const updateNodes: {
+          [expression: string]: { value: any; strategy?: 'merge' | 'replace' }
+        } = {}
+        const valueSrcFileContentJson = valueSrcFileContent
+          ? JSON.parse(valueSrcFileContent)
+          : undefined
         for (const expression of expressions) {
-          replaceNodes[expression] = item.value
+          let replaceValue = item.value
+          if (valueSrcFileContentJson) {
+            //TODO: allow using different expressions types for sourcing
+            const srcExpression = item.fromExpression || expression
+            replaceValue = readUtil.getJsonValue(
+              item.fromFile as string,
+              valueSrcFileContentJson,
+              srcExpression,
+              item.required == true
+            )
+          } else {
+            replaceValue - item.value
+          }
+          updateNodes[expression] = {
+            value: replaceValue,
+            strategy: item.stratagey,
+          }
         }
 
-        util.jsonReplaceNodes(jsonContent, replaceNodes)
+        json.updateJsonNodes(jsonContent, updateNodes)
 
         newContent = JSON.stringify(jsonContent, null, 2)
       } else {
@@ -193,47 +257,73 @@ export async function updateFiles(
   taskLog.trace('end')
 }
 
-export async function sanitisePackageJson(
-  opts: {
-    config?: SanitisePackageJsonTaskConfig
-  } & HasDryRun &
-    RunContext
-) {
-  if (!opts.config || !opts.config.dest || opts.config.dest.length == 0) {
-    return
+module readUtil {
+  const taskLog = log.getSubLogger({ name: 'readUtil' })
+
+  export function getJsonValue(
+    filePath: string,
+    jsonContent: any,
+    expression: string,
+    required: boolean
+  ): any {
+    const srcNodes = json.findJsonNodes(jsonContent, expression)
+    if (srcNodes.length == 0) {
+      const errMsg = `Can't find any json nodes with expression '${expression}' in file '${filePath}'`
+      if (required) {
+        taskLog.error(errMsg + ', and is required', {
+          expression,
+          fileContent: jsonContent,
+          filePath,
+        })
+        throw new Error(errMsg + '. and is required')
+      } else {
+        taskLog.warn(errMsg + '. Not required, so skipping', {
+          expression,
+          fileContent: jsonContent,
+          filePath,
+        })
+        return null
+      }
+    } else if (srcNodes.length > 1) {
+      const errMsg = `Found multiple matching nodes for expression '${expression}' in file '${filePath}'. Don't know which one to use`
+      taskLog.error(errMsg, {
+        expression,
+        fileContent: jsonContent,
+        filePath,
+        srcNodes,
+      })
+      throw new Error(errMsg)
+    } else {
+      return srcNodes[0].getValue()
+    }
   }
 
-  const taskLog = log.getSubLogger({
-    name: opts.dryRun
-      ? 'sanitisePackageJsonTask.dryRun'
-      : 'sanitisePackageJsonTask',
-  })
-  taskLog.debug('begin')
-
-  const path = opts.config.dest
-  if (!(await fs.pathExists(path))) {
-    taskLog.warn('No ' + path + ', skipping sanitise')
-    return
+  export function getProperty(
+    filePath: string,
+    fileContent: any,
+    expression: string,
+    propertyRe: RegExp,
+    required: boolean
+  ): string | undefined {
+    const match = fileContent.match(propertyRe)
+    if (!match || match) {
+      const errMsg = `Couldn't find property '${expression}' in file '${filePath}'`
+      if (required) {
+        taskLog.error(errMsg + ', and is required', {
+          expression,
+          fileContent,
+          filePath,
+        })
+        throw new Error(errMsg + '. and is required')
+      } else {
+        taskLog.warn(errMsg + '. Not required, so skipping', {
+          expression,
+          fileContent,
+          filePath,
+        })
+        return undefined
+      }
+    }
+    return match[2]
   }
-
-  const replaceNodes = opts.config.replaceNodes || {}
-
-  //convert the excludes into replace with 'null'
-  const excludeNodes = opts.config.excludeNodes || []
-  excludeNodes.forEach((path) => {
-    replaceNodes[path] = null
-  })
-
-  const content = JSON.parse(await fs.readFile(path, 'utf8'))
-  util.jsonReplaceNodes(content, replaceNodes)
-  const newContent = JSON.stringify(content, null, 2)
-  taskLog.trace({ newContent })
-  if (opts.dryRun) {
-    taskLog.debug(`would have written sanitised '${path}'`)
-  } else {
-    await fs.writeFile(path, newContent)
-    taskLog.debug(`wrote sanitised '${path}'`)
-  }
-
-  taskLog.trace('end')
 }

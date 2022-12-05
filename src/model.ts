@@ -27,13 +27,13 @@ export type HasExtends = {
 
 export type MergeConfig = Partial<HasLogLevel> &
   Partial<HasExtends> & {
-    //parent configs to apply
-    applyBefore?: string | string[]
-    applyAfter?: string | string[]
-    packageJson?: MergePackageJsonConfig
-    copy?: CopyTaskItem[]
-    delete?: DeleteTaskItem[]
-    update?: UpdateTaskItem[]
+    //configs to run before this one
+    runBefore?: string | string[]
+    //configs to run after this ones
+    runAfter?: string | string[]
+    copyFiles?: CopyTaskItem[]
+    deleteFiles?: DeleteTaskItem[]
+    updateFiles?: UpdateTaskItem[]
   }
 export type PackageJson = {
   [key: string]: Partial<MergeConfig> & Partial<HasDefaultSrcAndDest>
@@ -43,7 +43,7 @@ export type HasSrcDir = { dir: string }
 export type HasSrcInclude = Partial<HasSrcDir> & { include?: string | string[] }
 export type HasDestDir = { dest: string }
 export type HasTarget = { target: string }
-export type HasPackageDependency = { package: string }
+export type HasPackageDependency = { fromPackage: string }
 export type HasRequired = { required: boolean }
 
 export type CopyTaskItem = HasSrcInclude &
@@ -65,23 +65,19 @@ export type UpdateTaskItem = HasSrcInclude &
   Partial<HasRequired> &
   HasLoggingLabel & {
     // which matcher to
-    expressionType?: 're' | 'text' | 'json'
+    expressionType?: 're' | 'text' | 'json' | 'property'
     // the match expression. If an array, then they are treated as indiviual expressions
     expression: string | string[]
     //what to replace any matches with
     value?: any
     //what the file encoding is
     encoding?: BufferEncoding
+    //if set, and no value set, then use this file as the value source
+    fromFile?: string
+    //if set, then use this expression to extract the value from the file, otherwise, use the expression
+    fromExpression?: string
+    fromExpressionType?: string
+    stratagey?: 'merge' | 'replace'
   }
-export type SanitisePackageJsonTaskConfig = {
-  dest?: string
-  excludeNodes?: string[]
-  replaceNodes?: { [pathExpression: string]: string | null | undefined }
-}
-export type MergePackageJsonConfig = {
-  dest?: string
-  includeNodes?: string[]
-  excludeNodes?: string[]
-}
 
 export type CopyTarget = { src: string; target: string }

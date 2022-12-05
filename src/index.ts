@@ -1,7 +1,11 @@
 import { log, LogLevel, setLogLevel } from '@/logging'
 import {
-  HasDestDir, HasDryRun, HasSrcDir,
-  MergeConfig, PackageJson, ROOT_DIR
+  HasDestDir,
+  HasDryRun,
+  HasSrcDir,
+  MergeConfig,
+  PackageJson,
+  ROOT_DIR,
 } from '@/model'
 import * as task from '@/tasks'
 import { getMergedConfig } from '@/util'
@@ -70,10 +74,10 @@ async function runConfig(opts: {
   opts.appliedConfigs.push(configKey)
 
   //before configs
-  const applyBefore = config.applyBefore
-  if (applyBefore) {
-    const keys = typeof applyBefore == 'string' ? [applyBefore] : applyBefore
-    log.debug('applyBefore:', keys)
+  const runBefore = config.runBefore
+  if (runBefore) {
+    const keys = typeof runBefore == 'string' ? [runBefore] : runBefore
+    log.debug('runBefore', { runBefore })
     for (const beforeConfigKey of keys) {
       const beforeConfig = getMergedConfig(packageJson, beforeConfigKey)
       await runConfig({
@@ -88,24 +92,19 @@ async function runConfig(opts: {
   log.info(`running config: '${configKey}'...`)
   {
     await task.copyFiles({
-      items: config.copy,
+      items: config.copyFiles,
       defaults: opts.defaults,
       dryRun: opts.dryRun,
       currentKey: configKey,
     })
     await task.deleteFiles({
-      items: config.delete,
+      items: config.deleteFiles,
       defaults: opts.defaults,
       dryRun: opts.dryRun,
       currentKey: configKey,
     })
-    await task.sanitisePackageJson({
-      config: config.packageJson,
-      dryRun: opts.dryRun,
-      currentKey: configKey,
-    })
     await task.updateFiles({
-      items: config.update,
+      items: config.updateFiles,
       defaults: opts.defaults,
       dryRun: opts.dryRun,
       currentKey: configKey,
@@ -113,11 +112,11 @@ async function runConfig(opts: {
   }
 
   //after configs
-  const applyAfter = config.applyAfter
-  if (applyAfter) {
-    const keys = typeof applyAfter == 'string' ? [applyAfter] : applyAfter
-    log.debug('applyAfter:', keys)
-    for (const afterConfigKey of applyAfter) {
+  const runAfter = config.runAfter
+  if (runAfter) {
+    const keys = typeof runAfter == 'string' ? [runAfter] : runAfter
+    log.debug('runAfter:', { runAfter })
+    for (const afterConfigKey of keys) {
       const afterConfig = getMergedConfig(packageJson, afterConfigKey)
       await runConfig({
         ...opts,

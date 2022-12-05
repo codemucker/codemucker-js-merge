@@ -1,15 +1,19 @@
 import { defaults, hardDefaults } from '@/defaults'
-import { log, Logger } from '@/logging'
+import { log } from '@/logging'
 import {
   CopyTarget,
   HasDefaultSrcAndDest,
   HasDestDir,
-  HasLogLevel, HasPackageDependency, HasSrcDir, HasSrcInclude,
+  HasLogLevel,
+  HasPackageDependency,
+  HasSrcDir,
+  HasSrcInclude,
   HasTarget,
   MergeConfig,
   PackageJson,
-  ROOT_DIR
+  ROOT_DIR,
 } from '@/model'
+
 import deepmerge from 'deepmerge'
 import glob from 'fast-glob'
 import fspath from 'path'
@@ -32,8 +36,8 @@ export async function findFiles(
     Partial<HasPackageDependency>,
   defaults: HasDestDir & HasSrcDir
 ): Promise<CopyTarget[]> {
-  const pkgDir = include.package
-    ? getDependencyPath(include.package)
+  const pkgDir = include.fromPackage
+    ? getDependencyPath(include.fromPackage)
     : undefined
   let dir = include.dir || defaults.dir
   dir = ensureEndsWithSlash(pkgDir ? pkgDir + dir : dir)
@@ -132,99 +136,4 @@ function getRawConfig(
     throw new Error(erroMsg)
   }
   return cfg
-}
-
-//update all the elements matching the given json node expression
-export function jsonReplaceNodes(
-  content: any,
-  replaceNodes: { [expression: string]: any }
-) {
-  const jsonLog = log.getSubLogger({ name: 'jsonUtil' })
-
-  jsonLog.trace('start', { content, replaceNodes })
-  for (const expression in replaceNodes) {
-    const replaceValue = replaceNodes[expression]
-    jsonLog.trace('jsonReplace', { expression, replaceValue })
-
-    const parts = expression.split('.')
-    internalJsonReplaceNodes(
-      content,
-      expression,
-      content,
-      parts,
-      0, //index
-      parts[0], //part
-      undefined, //parentPath
-      replaceValue,
-      jsonLog
-    )
-  }
-}
-
-function internalJsonReplaceNodes(
-  rootContent: any,
-  expression: string,
-  currentNode: any,
-  parts: string[],
-  index: number,
-  part: string,
-  parentPath: string | undefined,
-  replaceValue: any,
-  logger: Logger
-) {
-  if (currentNode == undefined || currentNode == null) {
-    return
-  }
-  const endOfExpression = index >= parts.length - 1
-
-  //handle wildcards
-  if (part.endsWith('*')) {
-    //match on the bit before the wildcard
-    const startsWith = part.substring(0, part.length - 2)
-    for (const [key] of Object.entries(currentNode)) {
-      if (key.startsWith(startsWith)) {
-        internalJsonReplaceNodes(
-          rootContent,
-          expression,
-          currentNode, //currentNode
-          parts,
-          index + 1,
-          key, //part
-          parentPath,
-          replaceValue,
-          logger
-        )
-      }
-    }
-  } else if (!endOfExpression) {
-    //keep walking down
-    internalJsonReplaceNodes(
-      rootContent,
-      expression,
-      currentNode[part],
-      parts,
-      index + 1,
-      parts[index + 1],
-      parentPath ? parentPath + '.' + part : part,
-      replaceValue,
-      logger
-    )
-  } else {
-    //this is the final node we want
-    const finalPath = parentPath ? parentPath + '.' + part : part
-    if (replaceValue == undefined || replaceValue == null) {
-      logger.trace('Delete node', { expression, finalPath, part, currentNode })
-      delete currentNode[part]
-    } else {
-      //TODO: interpolate vars
-      logger.trace('Replace node', {
-        expression,
-        finalPath,
-        replaceValue,
-        part,
-        currentNode,
-      })
-      currentNode[part] = replaceValue
-    }
-  }
 }
