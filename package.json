@@ -25,7 +25,7 @@
   ],
   "type": "module",
   "bin": {
-    "codemucker-merge": "./dist/js/main.js"
+    "codemucker-merge": "./dist/mjs/main.js"
   },
   "exports": {
     ".": {
