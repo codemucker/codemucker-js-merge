@@ -38,7 +38,7 @@ export const defaults: PackageJson = {
       {
         task: 'copy',
         label: 'common assets',
-        include: ['LICENSE', 'README*', 'package.json'],
+        include: ['LICENSE*', 'README*', 'package.json'],
         dest: 'build/release/',
         required: true,
       },
