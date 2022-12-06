@@ -15,7 +15,7 @@ import fspath from 'path'
 export type TaskContext<T> = {
   defaults: HasDestDir & HasSrcDir
   currentKey: string
-  task: T
+  taskConfig: T
 } & HasDryRun
 
 
@@ -31,7 +31,7 @@ export async function taskCopy(ctxt: TaskContext<CopyTask>) {
   const taskLog = log.getSubLogger({
     name: ctxt.dryRun ? 'run:copyTask.dryRun' : 'run:copyTask',
   })
-  const task = ctxt.task
+  const task = ctxt.taskConfig
 
   taskLog.debug('begin')
 
@@ -43,8 +43,8 @@ export async function taskCopy(ctxt: TaskContext<CopyTask>) {
   if (task.required && found.length < util.getMinNumMatches(task)) {
     const errMsg = `expected to find at least ${util.getMinNumMatches(
       task
-    )} item(s), but was ${found.length}, and was marked as 'required'`
-    taskLog.error(errMsg, { configKey: ctxt.currentKey, item: task, found })
+    )} files(s), but was ${found.length}, and was marked as 'required'`
+    taskLog.error(errMsg, { configKey: ctxt.currentKey, task, found })
     if (!ctxt.dryRun) {
       throw new Error(errMsg)
     }
@@ -68,7 +68,7 @@ export async function taskCopy(ctxt: TaskContext<CopyTask>) {
 }
 
 export async function taskDelete(ctxt: TaskContext<DeleteTask>) {
-  const task = ctxt.task
+  const task = ctxt.taskConfig
   const taskLog = log.getSubLogger({
     name: ctxt.dryRun ? 'run:deleteTask.dryRun' : 'run:deleteTask',
   })
@@ -97,7 +97,7 @@ export async function taskUpdate(ctxt: TaskContext<UpdateTask>) {
   })
   taskLog.debug('begin')
   let index = -1
-  const task = ctxt.task
+  const task = ctxt.taskConfig
   index++
   if (task.label) {
     taskLog.debug('processing: ' + task.label)
@@ -117,8 +117,8 @@ export async function taskUpdate(ctxt: TaskContext<UpdateTask>) {
   if (task.required && found.length < util.getMinNumMatches(task)) {
     const errMsg = `expected to find at least ${util.getMinNumMatches(
       task
-    )} item(s), but was ${found.length}, and was marked as 'required'`
-    taskLog.error(errMsg, { configKey: ctxt.currentKey, item: task, found })
+    )} files(s), but was ${found.length}, and was marked as 'required'`
+    taskLog.error(errMsg, { configKey: ctxt.currentKey, task, found })
     if (!ctxt.dryRun) {
       throw new Error(errMsg)
     }

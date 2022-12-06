@@ -29,7 +29,7 @@ async function commandRun(
   }
   const config = getMergedConfig(packageJson, opts.configKey)
   const defaultsDrs = {
-    dir: config.defaultSrc,
+    srcDir: config.defaultSrc,
     dest: config.defaultDest,
   }
 
@@ -87,14 +87,14 @@ async function runConfig(opts: {
   log.info(`running config: '${configKey}'...`)
   const runTasks = config.tasks || []
   for (const task of runTasks) {
-    const runner = taskRunners[task.type]
+    const runner = taskRunners[task.task]
     if (!runner) {
-      const errMsg = `No task runner for task type '${task.type}'`
+      const errMsg = `No task runner for task type '${task.task}'`
       log.fatal(errMsg, { task })
       throw new Error(errMsg)
     }
     await runner({
-      task,
+      taskConfig: task,
       defaults: opts.defaults,
       dryRun: opts.dryRun,
       currentKey: configKey,

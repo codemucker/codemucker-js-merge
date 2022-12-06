@@ -38,7 +38,7 @@ export type PackageJson = {
   [key: string]: Partial<MergeConfig> & Partial<HasDefaultSrcAndDest>
 }
 
-export type HasSrcDir = { dir: string }
+export type HasSrcDir = { srcDir: string }
 export type HasSrcInclude = Partial<HasSrcDir> & { include?: string | string[] }
 export type HasDestDir = { dest: string }
 export type HasTarget = { target: string }
@@ -51,14 +51,14 @@ export type CopyTask = HasSrcInclude &
   Partial<HasPackageDependency> &
   Partial<HasRequired> &
   HasLoggingLabel & {
-    type: 'copy'
+    task: 'copy'
     //if set to false, then if the target exists, don't overwrite
     overwrite?: boolean
   }
 
 export type DeleteTask = HasSrcInclude &
   HasLoggingLabel & {
-    type: 'delete'
+    task: 'delete'
   }
 
 export type UpdateTask = HasSrcInclude &
@@ -67,7 +67,7 @@ export type UpdateTask = HasSrcInclude &
   Partial<HasPackageDependency> &
   Partial<HasRequired> &
   HasLoggingLabel & {
-    type: 'update'
+    task: 'update'
     // which matcher to
     expressionType?: 're' | 'text' | 'json' | 'property'
     // the match expression. If an array, then they are treated as indiviual expressions
@@ -85,7 +85,7 @@ export type UpdateTask = HasSrcInclude &
   }
 
 export type RunTasks = HasLoggingLabel & {
-  type: 'task'
+  task: 'run'
   tasks?: Task[]
 }
 

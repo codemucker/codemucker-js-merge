@@ -82,7 +82,7 @@
     "preTasks": "@codemucker/merge/default/pnpm-ts-module-dist",
     "tasks": [
       {
-        "type": "copy",
+        "task": "copy",
         "label": "copy templates",
         "include": [
           "LICENSE*",
@@ -96,16 +96,16 @@
         "required": true
       },
       {
-        "type": "copy",
+        "task": "copy",
         "label": "scripts package.json",
         "include": "package.json",
         "target": "build/release/templates/package.scripts.json",
         "required": true
       },
       {
-        "type": "copy",
+        "task": "copy",
         "label": "esm and cjs package.json",
-        "dir": "src",
+        "srcDir": "src",
         "include": "package.*.json",
         "dest": "build/release/templates/",
         "required": true

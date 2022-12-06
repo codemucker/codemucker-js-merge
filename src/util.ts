@@ -39,7 +39,7 @@ export async function findFiles(
   const pkgDir = include.fromPackage
     ? getDependencyPath(include.fromPackage)
     : undefined
-  let dir = include.dir || defaults.dir
+  let dir = include.srcDir || defaults.srcDir
   dir = ensureEndsWithSlash(pkgDir ? pkgDir + dir : dir)
   const dest = ensureEndsWithSlash(include.dest || defaults.dest)
   const includes = includesToArray(include.include)
