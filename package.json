@@ -79,7 +79,7 @@
     "watch": "1.0.2"
   },
   "@codemucker/merge/dist": {
-    "preTasks": "@codemucker/merge/default/pnpm-ts-module-dist",
+    "preConfigs": "@codemucker/merge/default/pnpm-ts-module-dist",
     "tasks": [
       {
         "task": "copy",

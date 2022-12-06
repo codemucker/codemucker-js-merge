@@ -69,10 +69,10 @@ async function runConfig(opts: {
   opts.configsRun.push(configKey)
 
   //before configs
-  const runBefore = config.preTasks
-  if (runBefore) {
-    const keys = typeof runBefore == 'string' ? [runBefore] : runBefore
-    log.debug('runBefore', { runBefore })
+  const preConfigs = config.preConfigs
+  if (preConfigs) {
+    const keys = typeof preConfigs == 'string' ? [preConfigs] : preConfigs
+    log.debug('preConfigs', { preConfigs })
     for (const beforeConfigKey of keys) {
       const beforeConfig = getMergedConfig(packageJson, beforeConfigKey)
       await runConfig({
@@ -90,7 +90,7 @@ async function runConfig(opts: {
     const runner = taskRunners[task.task]
     if (!runner) {
       const errMsg = `No task runner for task type '${task.task}'`
-      log.fatal(errMsg, { task })
+      log.fatal(errMsg, { task, config })
       throw new Error(errMsg)
     }
     await runner({
@@ -102,10 +102,10 @@ async function runConfig(opts: {
   }
 
   //after configs
-  const runAfter = config.postTasks
-  if (runAfter) {
-    const keys = typeof runAfter == 'string' ? [runAfter] : runAfter
-    log.debug('runAfter:', { runAfter })
+  const postConfigs = config.postConfigs
+  if (postConfigs) {
+    const keys = typeof postConfigs == 'string' ? [postConfigs] : postConfigs
+    log.debug('preConfigs:', { postConfigs })
     for (const afterConfigKey of keys) {
       const afterConfig = getMergedConfig(packageJson, afterConfigKey)
       await runConfig({

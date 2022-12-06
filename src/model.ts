@@ -28,11 +28,11 @@ export type HasExtends = {
 export type MergeConfig = Partial<HasLogLevel> &
   Partial<HasExtends> & {
     //configs to run before this one
-    preTasks?: string | string[]
+    preConfigs?: string | string[]
     //main tasks to run for this config
     tasks?: Task[]
     //configs to run after this ones
-    postTasks?: string | string[]
+    postConfigs?: string | string[]
   }
 export type PackageJson = {
   [key: string]: Partial<MergeConfig> & Partial<HasDefaultSrcAndDest>
