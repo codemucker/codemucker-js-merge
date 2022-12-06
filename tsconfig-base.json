@@ -10,7 +10,7 @@
     "experimentalDecorators": true,
     "importHelpers": false,
     "inlineSourceMap": false,
-    "lib": ["ESNext"],
+    "lib": ["ES2022"],
     "moduleResolution": "Node",
     "pretty": true,
     "resolveJsonModule": true,

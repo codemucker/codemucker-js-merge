@@ -21,8 +21,8 @@ specifiers:
   ts-jest: ^29.0.3
   ts-node: 10.9.1
   tslog: ^4.4.4
-  tsx: ^3.12.1
-  typescript: ^4.9.3
+  tsx: 3.12.1
+  typescript: 4.9.3
   watch: 1.0.2
 
 dependencies:
