@@ -1,33 +1,33 @@
 import * as json from '@/json'
 import { log } from '@/logging'
 import {
-  CopyTask,
-  DeleteTask,
+  CopyTaskConfig,
+  DeleteTaskConfig,
   HasDestDir,
   HasDryRun,
   HasSrcDir,
-  UpdateTask,
+  UpdateTaskConfig,
 } from '@/model'
 import * as util from '@/util'
 import fs from 'fs-extra'
 import fspath from 'path'
 
-export type TaskContext<T> = {
+export type TaskContext<TConfig> = {
   defaults: HasDestDir & HasSrcDir
   currentKey: string
-  taskConfig: T
+  taskConfig: TConfig
 } & HasDryRun
 
 
 export type TaskRunner = (context: TaskContext<unknown>) => Promise<void>
 
 export const taskRunners: { [type: string]: TaskRunner } = {
-  copy: (context) => taskCopy(context as TaskContext<CopyTask>),
-  update: (context) => taskUpdate(context as TaskContext<UpdateTask>),
-  delete: (context) => taskDelete(context as TaskContext<DeleteTask>),
+  copy: (context) => taskCopy(context as TaskContext<CopyTaskConfig>),
+  update: (context) => taskUpdate(context as TaskContext<UpdateTaskConfig>),
+  delete: (context) => taskDelete(context as TaskContext<DeleteTaskConfig>),
 }
 
-export async function taskCopy(ctxt: TaskContext<CopyTask>) {
+export async function taskCopy(ctxt: TaskContext<CopyTaskConfig>) {
   const taskLog = log.getSubLogger({
     name: ctxt.dryRun ? 'run:copyTask.dryRun' : 'run:copyTask',
   })
@@ -67,7 +67,7 @@ export async function taskCopy(ctxt: TaskContext<CopyTask>) {
   taskLog.trace('end')
 }
 
-export async function taskDelete(ctxt: TaskContext<DeleteTask>) {
+export async function taskDelete(ctxt: TaskContext<DeleteTaskConfig>) {
   const task = ctxt.taskConfig
   const taskLog = log.getSubLogger({
     name: ctxt.dryRun ? 'run:deleteTask.dryRun' : 'run:deleteTask',
@@ -91,7 +91,7 @@ export async function taskDelete(ctxt: TaskContext<DeleteTask>) {
   taskLog.trace('end')
 }
 
-export async function taskUpdate(ctxt: TaskContext<UpdateTask>) {
+export async function taskUpdate(ctxt: TaskContext<UpdateTaskConfig>) {
   const taskLog = log.getSubLogger({
     name: ctxt.dryRun ? 'run:updateTask.dryRun' : 'run:updateTask',
   })

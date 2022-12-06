@@ -83,7 +83,7 @@
     "tasks": [
       {
         "task": "copy",
-        "label": "copy templates",
+        "label": "templates",
         "include": [
           "LICENSE*",
           "tsconfig.*",

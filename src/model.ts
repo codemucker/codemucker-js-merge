@@ -45,7 +45,7 @@ export type HasTarget = { target: string }
 export type HasPackageDependency = { fromPackage: string }
 export type HasRequired = { required: boolean }
 
-export type CopyTask = HasSrcInclude &
+export type CopyTaskConfig = HasSrcInclude &
   Partial<HasDestDir> &
   Partial<HasTarget> &
   Partial<HasPackageDependency> &
@@ -56,12 +56,12 @@ export type CopyTask = HasSrcInclude &
     overwrite?: boolean
   }
 
-export type DeleteTask = HasSrcInclude &
+export type DeleteTaskConfig = HasSrcInclude &
   HasLoggingLabel & {
     task: 'delete'
   }
 
-export type UpdateTask = HasSrcInclude &
+export type UpdateTaskConfig = HasSrcInclude &
   Partial<HasDestDir> &
   Partial<HasTarget> &
   Partial<HasPackageDependency> &
@@ -84,11 +84,11 @@ export type UpdateTask = HasSrcInclude &
     stratagey?: 'merge' | 'replace'
   }
 
-export type RunTasks = HasLoggingLabel & {
+export type RunTasksConfig = HasLoggingLabel & {
   task: 'run'
   tasks?: Task[]
 }
 
 export type CopyTarget = { src: string; target: string }
 
-export type Task = CopyTask | UpdateTask | DeleteTask | RunTasks
+export type Task = CopyTaskConfig | UpdateTaskConfig | DeleteTaskConfig | RunTasksConfig
