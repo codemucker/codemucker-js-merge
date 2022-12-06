@@ -1,16 +1,8 @@
-import {
-  HasDefaultSrcAndDest,
-  MergeConfig,
-  PackageJson,
-  UpdateTaskItem,
-} from '@/model'
+import { HasDefaultSrcAndDest, MergeConfig, PackageJson } from '@/model'
 
 export const hardDefaults: MergeConfig & HasDefaultSrcAndDest = {
   logLevel: 'info',
   extends: undefined,
-  copyFiles: [],
-  deleteFiles: [],
-  updateFiles: [],
   defaultSrc: '.',
   defaultDest: 'build/release/dist',
 }
@@ -19,51 +11,59 @@ export const hardDefaults: MergeConfig & HasDefaultSrcAndDest = {
 export const defaults: PackageJson = {
   '@codemucker/merge/default': {
     logLevel: 'info',
-    copyFiles: [],
-    updateFiles: [],
   },
   '@codemucker/merge/default/none': {
     extends: '@codemucker/merge/default',
     logLevel: 'fatal',
   },
+  // Links:
+  //  - https://www.sensedeep.com/blog/posts/2021/how-to-create-single-source-npm-module.html
   '@codemucker/merge/default/pnpm-ts-module-dist': {
     extends: undefined,
-    copyFiles: [
+    tasks: [
       {
+        type: 'copy',
         label: 'built commonjs files',
         dir: 'build/mjs/src',
         dest: 'build/release/dist/mjs',
         required: true,
       },
       {
+        type: 'copy',
         label: 'built esm files',
         dir: 'build/cjs/src',
         dest: 'build/release/dist/cjs',
         required: true,
       },
       {
+        type: 'copy',
         label: 'common assets',
         include: ['LICENSE', 'README*', 'package.json'],
         dest: 'build/release/',
         required: true,
       },
-      { label: 'source code', dir: 'src/', dest: 'build/release/src/' },
       {
+        type: 'copy',
+        label: 'source code',
+        dir: 'src/',
+        dest: 'build/release/src/',
+      },
+      {
+        type: 'copy',
         label: 'commonjs package.json',
         include: 'src/package.cjs.json',
         target: 'build/release/dist/cjs/package.json',
         required: true,
       },
       {
+        type: 'copy',
         label: 'esm package.json',
         include: 'src/package.mjs.json',
         target: 'build/release/dist/mjs/package.json',
         required: true,
       },
-    ],
-    deleteFiles: [],
-    updateFiles: [
       {
+        type: 'update',
         include: 'build/release/package.json',
         expression: [
           'scripts',
@@ -80,6 +80,7 @@ export const defaults: PackageJson = {
         required: true,
       },
       {
+        type: 'update',
         label: 'fixup source maps',
         dir: 'build/release/',
         include: '**.js.map',
@@ -87,14 +88,15 @@ export const defaults: PackageJson = {
         expression: '../../',
         value: '',
       },
-    ] as UpdateTaskItem[],
+    ],
     defaultSrc: './',
     defaultDest: 'build/release/',
   },
   '@codemucker/merge/default/pnpm-ts-module-install': {
     extends: undefined,
-    copyFiles: [
+    tasks: [
       {
+        type: 'copy',
         fromPackage: '@codemucker/merge',
         label: 'tooling config',
         dir: 'templates',
@@ -109,6 +111,7 @@ export const defaults: PackageJson = {
         overwrite: true,
       },
       {
+        type: 'copy',
         fromPackage: '@codemucker/merge',
         label: 'esm & cjs package json',
         dir: 'templates',
@@ -117,9 +120,8 @@ export const defaults: PackageJson = {
         required: true,
         overwrite: true,
       },
-    ],
-    updateFiles: [
       {
+        type: 'update',
         label: 'merge scripts block',
         fromPackage: '@codemucker/merge',
         fromFile: 'templates/package.scripts.json',
@@ -130,6 +132,7 @@ export const defaults: PackageJson = {
         required: true,
       },
       {
+        type: 'update',
         label: 'copy dependencies from devDependencies',
         fromPackage: '@codemucker/merge',
         fromFile: 'templates/package.scripts.json',

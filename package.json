@@ -17,20 +17,20 @@
   },
   "private": false,
   "support": true,
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/mjs/index.mjs",
-  "types": "./dist/mjs/index.d.ts",
+  "main": "./dist/cjs/main.js",
+  "module": "./dist/mjs/main.mjs",
+  "types": "./dist/mjs/main.d.ts",
   "files": [
     "dist/*"
   ],
   "type": "module",
   "bin": {
-    "codemucker-merge": "./dist/js/index.js"
+    "codemucker-merge": "./dist/js/main.js"
   },
   "exports": {
     ".": {
-      "import": "./dist/mjs/index.js",
-      "require": "./dist/cjs/index.js"
+      "import": "./dist/mjs/main.js",
+      "require": "./dist/cjs/main.js"
     }
   },
   "scripts": {
@@ -46,8 +46,8 @@
     "clean": "rm -fR dist/* && rm -fR build/*  && rm -fR node_modules/*",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json  && pnpm run build:dist",
     "build:watch": "tsc --watch",
-    "build:dist": "tsx src/index.ts run dist",
-    "build:dist:dryrun": "tsx src/index.ts run --dry-run dist",
+    "build:dist": "tsx src/main.ts run @codemucker/merge/dist",
+    "build:dist:dryrun": "tsx src/main.ts run --dry-run dist",
     "test": "pnpm run build && jest --verbose=true --detectOpenHandles --coverageDirectory build/jest-coverage",
     "test:watch": "watch 'pnpm run test' ./src/ ./test/"
   },
@@ -79,9 +79,10 @@
     "watch": "1.0.2"
   },
   "@codemucker/merge/dist": {
-    "runBefore": "@codemucker/merge/default/pnpm-ts-module-dist",
-    "copyFiles": [
+    "preTasks": "@codemucker/merge/default/pnpm-ts-module-dist",
+    "tasks": [
       {
+        "type": "copy",
         "label": "copy templates",
         "include": [
           "LICENSE*",
@@ -95,12 +96,14 @@
         "required": true
       },
       {
+        "type": "copy",
         "label": "scripts package.json",
         "include": "package.json",
         "target": "build/release/templates/package.scripts.json",
         "required": true
       },
       {
+        "type": "copy",
         "label": "esm and cjs package.json",
         "dir": "src",
         "include": "package.*.json",

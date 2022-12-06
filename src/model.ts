@@ -28,12 +28,11 @@ export type HasExtends = {
 export type MergeConfig = Partial<HasLogLevel> &
   Partial<HasExtends> & {
     //configs to run before this one
-    runBefore?: string | string[]
+    preTasks?: string | string[]
+    //main tasks to run for this config
+    tasks?: Task[]
     //configs to run after this ones
-    runAfter?: string | string[]
-    copyFiles?: CopyTaskItem[]
-    deleteFiles?: DeleteTaskItem[]
-    updateFiles?: UpdateTaskItem[]
+    postTasks?: string | string[]
   }
 export type PackageJson = {
   [key: string]: Partial<MergeConfig> & Partial<HasDefaultSrcAndDest>
@@ -46,24 +45,29 @@ export type HasTarget = { target: string }
 export type HasPackageDependency = { fromPackage: string }
 export type HasRequired = { required: boolean }
 
-export type CopyTaskItem = HasSrcInclude &
+export type CopyTask = HasSrcInclude &
   Partial<HasDestDir> &
   Partial<HasTarget> &
   Partial<HasPackageDependency> &
   Partial<HasRequired> &
   HasLoggingLabel & {
+    type: 'copy'
     //if set to false, then if the target exists, don't overwrite
     overwrite?: boolean
   }
 
-export type DeleteTaskItem = HasSrcInclude & HasLoggingLabel
+export type DeleteTask = HasSrcInclude &
+  HasLoggingLabel & {
+    type: 'delete'
+  }
 
-export type UpdateTaskItem = HasSrcInclude &
+export type UpdateTask = HasSrcInclude &
   Partial<HasDestDir> &
   Partial<HasTarget> &
   Partial<HasPackageDependency> &
   Partial<HasRequired> &
   HasLoggingLabel & {
+    type: 'update'
     // which matcher to
     expressionType?: 're' | 'text' | 'json' | 'property'
     // the match expression. If an array, then they are treated as indiviual expressions
@@ -80,4 +84,11 @@ export type UpdateTaskItem = HasSrcInclude &
     stratagey?: 'merge' | 'replace'
   }
 
+export type RunTasks = HasLoggingLabel & {
+  type: 'task'
+  tasks?: Task[]
+}
+
 export type CopyTarget = { src: string; target: string }
+
+export type Task = CopyTask | UpdateTask | DeleteTask | RunTasks

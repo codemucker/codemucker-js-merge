@@ -1,4 +1,3 @@
-import { defaults } from './defaults'
 import { log, LogLevel, setLogLevel } from '@/logging'
 import {
   HasDestDir,
@@ -8,16 +7,11 @@ import {
   PackageJson,
   ROOT_DIR,
 } from '@/model'
-import * as task from '@/tasks'
+import { taskRunners } from '@/tasks'
 import { getMergedConfig } from '@/util'
 import { program } from 'commander'
 import fs from 'fs-extra'
-
-// Links:
-//  - https://www.sensedeep.com/blog/posts/2021/how-to-create-single-source-npm-module.html
-//
-
-//const distDefaults = defaults['@codemucker/merge/dist']
+import { defaults } from './defaults'
 
 const packageJson: PackageJson = JSON.parse(
   fs.readFileSync(ROOT_DIR + '/package.json', 'utf8')
@@ -75,7 +69,7 @@ async function runConfig(opts: {
   opts.configsRun.push(configKey)
 
   //before configs
-  const runBefore = config.runBefore
+  const runBefore = config.preTasks
   if (runBefore) {
     const keys = typeof runBefore == 'string' ? [runBefore] : runBefore
     log.debug('runBefore', { runBefore })
@@ -91,21 +85,16 @@ async function runConfig(opts: {
 
   //main config
   log.info(`running config: '${configKey}'...`)
-  {
-    await task.copyFiles({
-      items: config.copyFiles,
-      defaults: opts.defaults,
-      dryRun: opts.dryRun,
-      currentKey: configKey,
-    })
-    await task.deleteFiles({
-      items: config.deleteFiles,
-      defaults: opts.defaults,
-      dryRun: opts.dryRun,
-      currentKey: configKey,
-    })
-    await task.updateFiles({
-      items: config.updateFiles,
+  const runTasks = config.tasks || []
+  for (const task of runTasks) {
+    const runner = taskRunners[task.type]
+    if (!runner) {
+      const errMsg = `No task runner for task type '${task.type}'`
+      log.fatal(errMsg, { task })
+      throw new Error(errMsg)
+    }
+    await runner({
+      task,
       defaults: opts.defaults,
       dryRun: opts.dryRun,
       currentKey: configKey,
@@ -113,7 +102,7 @@ async function runConfig(opts: {
   }
 
   //after configs
-  const runAfter = config.runAfter
+  const runAfter = config.postTasks
   if (runAfter) {
     const keys = typeof runAfter == 'string' ? [runAfter] : runAfter
     log.debug('runAfter:', { runAfter })
@@ -153,7 +142,7 @@ program
     const dryRun = commandOptions['dryRun'] == true
 
     await commandRun({
-      configKey: `@codemucker/merge/${configKey}`,
+      configKey,
       logLevel,
       dryRun,
     })
