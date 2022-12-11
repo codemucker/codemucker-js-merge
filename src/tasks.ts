@@ -1,5 +1,5 @@
-import * as json from '@/json'
-import { log } from '@/logging'
+import * as json from '@/json.js'
+import { log } from '@/logging.js'
 import {
   CopyTaskConfig,
   DeleteTaskConfig,
@@ -7,8 +7,8 @@ import {
   HasDryRun,
   HasSrcDir,
   UpdateTaskConfig,
-} from '@/model'
-import * as util from '@/util'
+} from '@/model.js'
+import * as util from '@/util.js'
 import fs from 'fs-extra'
 import fspath from 'path'
 

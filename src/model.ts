@@ -1,6 +1,6 @@
 import fspath from 'path'
 
-import { LogLevel } from '@/logging'
+import { LogLevel } from '@/logging.js'
 export const ROOT_DIR = fspath.resolve('.')
 
 export type HasDefaultSrcAndDest = {

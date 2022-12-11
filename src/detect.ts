@@ -1,5 +1,5 @@
 //detecting package manager
-import { ROOT_DIR } from '@/model'
+import { ROOT_DIR } from '@/model.js'
 import fs from 'fs-extra'
 
 export type PkgManager = 'npm' | 'pnpm' | 'yarn'

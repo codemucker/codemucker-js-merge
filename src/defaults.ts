@@ -1,4 +1,4 @@
-import { HasDefaultSrcAndDest, MergeConfig, PackageJson } from '@/model'
+import { HasDefaultSrcAndDest, MergeConfig, PackageJson } from '@/model.js'
 
 export const hardDefaults: MergeConfig & HasDefaultSrcAndDest = {
   logLevel: 'info',

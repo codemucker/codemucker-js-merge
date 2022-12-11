@@ -1,0 +1,8 @@
+{
+    "name":"test-project",
+    "version":"0.0.0",
+    "private":true,
+    "devDependencies": {
+        "@codemucker/merge":"0.0.0"
+    }
+}

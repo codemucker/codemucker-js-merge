@@ -2,7 +2,6 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "allowJs": false,
-    //required?
     "checkJs": false,
     "allowSyntheticDefaultImports": true,
     "declaration": true,
@@ -17,7 +16,6 @@
     "skipLibCheck": true,
     "sourceMap": true,
 
-    //code style
     "strict": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
@@ -25,7 +23,7 @@
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "noImplicitAny": true,
-        
+
     "baseUrl": ".",
     "types": ["node", "jest"],
     "paths": {

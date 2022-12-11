@@ -1,5 +1,5 @@
-import { defaults, hardDefaults } from '@/defaults'
-import { log } from '@/logging'
+import { defaults, hardDefaults } from '@/defaults.js'
+import { log } from '@/logging.js'
 import {
   CopyTarget,
   HasDefaultSrcAndDest,
@@ -12,7 +12,7 @@ import {
   MergeConfig,
   PackageJson,
   ROOT_DIR,
-} from '@/model'
+} from '@/model.js'
 
 import deepmerge from 'deepmerge'
 import glob from 'fast-glob'

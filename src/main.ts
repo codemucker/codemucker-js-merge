@@ -1,4 +1,4 @@
-import { log, LogLevel, setLogLevel } from '@/logging'
+import { log, LogLevel, setLogLevel } from '@/logging.js'
 import {
   HasDestDir,
   HasDryRun,
@@ -6,9 +6,9 @@ import {
   MergeConfig,
   PackageJson,
   ROOT_DIR,
-} from '@/model'
-import { taskRunners } from '@/tasks'
-import { getMergedConfig } from '@/util'
+} from '@/model.js'
+import { taskRunners } from '@/tasks.js'
+import { getMergedConfig } from '@/util.js'
 import { program } from 'commander'
 import fs from 'fs-extra'
 import { defaults } from './defaults'

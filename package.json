@@ -2,7 +2,7 @@
   "name": "@codemucker/merge",
   "description": "Make it easier to build npm packages",
   "license": "MIT",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "authors": [
     "Bert van Brakel"
   ],
@@ -33,31 +33,38 @@
       "require": "./dist/cjs/main.js"
     }
   },
+  "_moduleAliases": {
+    "@": "../src"
+  },
   "scripts": {
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm test && pnpm run lint",
     "release": "publish --access restricted",
-    "release:local": "pnpm unpublish --force --registry=http://localhost:5000 && pnpm publish build/release --access restricted --no-git-checks --registry=http://localhost:5000",
+    "release:local": "pnpm ci && pnpm unpublish --force --registry=http://localhost:5000 && pnpm publish build/release --access restricted --no-git-checks --registry=http://localhost:5000",
     "release:prompt": "release-it --dry-run",
     "pre-commit": "pnpm run format && pnpm run lint && pnpm run test",
     "version": "pnpm run format && pnpm run lint && git add -A src && git push && git push --tags",
     "format": "prettier --write .",
     "lint": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "clean": "rm -fR dist/* && rm -fR build/*  && rm -fR node_modules/*",
-    "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json  && pnpm run build:dist",
+    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json && tsc -p tsconfig.cjs.json && tsc-alias -p tsconfig.cjs.json  && pnpm run build:dist",
     "build:watch": "tsc --watch",
     "build:dist": "tsx src/main.ts run @codemucker/merge/dist",
     "build:dist:dryrun": "tsx src/main.ts run --dry-run dist",
-    "test": "pnpm run build && jest --verbose=true --detectOpenHandles --coverageDirectory build/jest-coverage",
-    "test:watch": "watch 'pnpm run test' ./src/ ./test/"
+    "test": "pnpm run build && jest",
+    "test:watch": "watch 'pnpm run test' ./src/ ./test/",
+    "ci": "pnpm clean && pnpm install && pnpm test"
   },
   "dependencies": {
+    "@npmcli/promise-spawn": "^6.0.1",
     "commander": "^9.4.1",
     "deepmerge": "^4.2.2",
     "fast-glob": "^3.2.12",
     "fs-extra": "^11.1.0",
     "glob": "^8.0.3",
+    "module-alias": "^2.2.2",
     "path": "^0.12.7",
+    "tsc-alias": "^1.8.1",
     "tslog": "^4.4.4"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { log, Logger } from '@/logging'
+import { log, Logger } from '@/logging.js'
 import deepmerge from 'deepmerge'
 
 export type JsonNode = {
